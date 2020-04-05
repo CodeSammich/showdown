@@ -8,3 +8,6 @@ creds
 *.xlsx
 *.txt
 suspect_decisions.py
+.mypy_cache/
+tags
+.DS_Store

@@ -370,8 +370,10 @@ class Battler:
 class Pokemon:
 
     def __init__(self, name: str, level: int):
+        # Single Number, Should be 1-hot
         self.name = normalize_name(name)
         self.base_name = self.name
+        # Single Number
         self.level = level
 
         try:
@@ -382,29 +384,46 @@ class Pokemon:
             logger.info("Using {} instead".format(self.name))
             self.base_stats = pokedex[self.name][constants.BASESTATS]
 
+        # 6 numbers
         self.stats = calculate_stats(self.base_stats, self.level)
 
+        # 1 number
         self.max_hp = self.stats.pop(constants.HITPOINTS)
+        # 1 number as percent
         self.hp = self.max_hp
         if self.name == 'shedinja':
             self.max_hp = 1
             self.hp = 1
 
+        # TODO: Encode, currently not neccessary
         self.ability = None
+        # Number between 1-17^2
         self.types = pokedex[self.name][constants.TYPES]
+        # Single number, should be 1-hot
         self.item = constants.UNKNOWN_ITEM
 
+        # Single number (0,1)
         self.fainted = False
+        # 4 Numbers, should be 1-hot
         self.moves = []
+        # Single number 
         self.status = None
+        # 1 or 0 for each in dict
         self.volatile_statuses = []
+        # 6 numbers
         self.boosts = defaultdict(lambda: 0)
         self.can_mega_evo = False
         self.can_ultra_burst = False
         self.can_dynamax = False
         self.is_mega = False
+        # 0 or 1
         self.can_have_choice_item = True
+        # 0 or 1
         self.can_have_life_orb = True
+
+    def to_vector(self):
+        # TODO
+        return []
 
     def forme_change(self, new_pkmn_name):
         hp_percent = float(self.hp) / self.max_hp
