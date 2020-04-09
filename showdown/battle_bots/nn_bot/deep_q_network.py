@@ -1,5 +1,5 @@
 import torch.nn as nn
-import torch.nn,.functional as F
+import torch.nn.functional as F
 import torch.optim as optim
 
 class DeepQNetwork(nn.Module):

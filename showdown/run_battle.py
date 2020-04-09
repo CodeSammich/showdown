@@ -168,3 +168,24 @@ async def pokemon_battle(ps_websocket_client, pokemon_battle_type): # this is th
             if action_required and not battle.wait:
                 best_move = await async_pick_move(battle)  # TODO agent best_move is action chosen
                 await ps_websocket_client.send_message(battle.battle_tag, best_move)
+
+async def train_pokemon(ps_websocket_client, pokemon_battle_type, agent):
+    battle = await start_battle(ps_websocket_client, pokemon_battle_type)
+    battle.agent = agent  # attach agent to pokemon so nn_bot can make moves
+    battle.learn_list = [0, 0, 0, 0]  # will (contain, state, action, next_state, done) that agent takes in step
+    while True:
+
+        msg = await ps_websocket_client.receive_message()
+        if battle_is_finished(msg):
+            winner = msg.split(constants.WIN_STRING)[-1].split('\n')[0].strip()
+            logger.debug("Winner: {}".format(winner))
+            await ps_websocket_client.send_message(battle.battle_tag, [config.battle_ending_message])
+            await ps_websocket_client.leave_battle(battle.battle_tag, save_replay=config.save_replay)
+            return winner
+        else:
+            action_required = await async_update_battle(battle, msg)
+            if action_required and not battle.wait:
+                best_move, state, action = await async_pick_move(battle)  # async_pick_move should to state and action to battle.learn_list TODO agent best_move is action chosen
+                battle.learn_list[0] = state
+                battle.learn_list[1] = action
+                await ps_websocket_client.send_message(battle.battle_tag, best_move)
