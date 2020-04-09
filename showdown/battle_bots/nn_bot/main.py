@@ -5,10 +5,10 @@ from showdown.engine.damage_calculator import calculate_damage
 from showdown.engine.find_state_instructions import update_attacking_move
 from ..helpers import format_decision
 
-
 class BattleBot(Battle):
     def __init__(self, *args, **kwargs):
         super(BattleBot, self).__init__(*args, **kwargs)
+        self.nn = None
 
     def find_best_move(self):
         state = self.create_state()
@@ -28,13 +28,24 @@ class BattleBot(Battle):
         most_damage = -1
         choice = None
         for move in moves:
-            damage_amounts = calculate_damage(state, constants.SELF, move, constants.DO_NOTHING_MOVE)
+            # pick best move 
+            if self.nn = None:
+                # most damage per move
+                damage_amounts = calculate_damage(state, constants.SELF, move, constants.DO_NOTHING_MOVE)
 
-            damage = damage_amounts[0] if damage_amounts else 0
+                damage = damage_amounts[0] if damage_amounts else 0
 
-            if damage > most_damage:
-                choice = move
-                most_damage = damage
+                if damage > most_damage:
+                    choice = move
+                    most_damage = damage
+            else:
+                # use move picked by NN
 
         return format_decision(self, choice)
+
+    def state_to_matrix(self, state):
+        # converts state into a vector
+        # state vector contains: weather, field, etc..., opponent's active, my active, my remaining
+        # drawback: it forgets previously released opponent's pokemon
+
 

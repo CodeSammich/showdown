@@ -187,6 +187,7 @@ class Battle(ABC):
         opponent = Side(opponent_active, opponent_reserve, copy(self.opponent.wish), copy(self.opponent.side_conditions))
 
         state = State(user, opponent, self.weather, self.field, self.trick_room)
+        
         return state
 
     def get_all_options(self):
@@ -422,7 +423,8 @@ class Pokemon:
         self.can_have_life_orb = True
 
     def to_vector(self):
-        # TODO
+        # Convert Pokemon's individual stats to a single vector 
+        #stats = torch.IntTensor(
         return []
 
     def forme_change(self, new_pkmn_name):
