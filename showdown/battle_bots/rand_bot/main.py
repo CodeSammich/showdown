@@ -42,4 +42,3 @@ class BattleBot(Battle):
         #         most_damage = damage
 
         return format_decision(self, choice)
-

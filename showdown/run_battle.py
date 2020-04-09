@@ -151,8 +151,8 @@ async def start_battle(ps_websocket_client, pokemon_battle_type):
 
     return battle
 
-
-async def pokemon_battle(ps_websocket_client, pokemon_battle_type):
+# TODO agent probably can have this return state, and action,
+async def pokemon_battle(ps_websocket_client, pokemon_battle_type): # this is the level at where  we can probably perform a "step"
     battle = await start_battle(ps_websocket_client, pokemon_battle_type)
     while True:
 
@@ -166,5 +166,5 @@ async def pokemon_battle(ps_websocket_client, pokemon_battle_type):
         else:
             action_required = await async_update_battle(battle, msg)
             if action_required and not battle.wait:
-                best_move = await async_pick_move(battle)
+                best_move = await async_pick_move(battle)  # TODO agent best_move is action chosen
                 await ps_websocket_client.send_message(battle.battle_tag, best_move)
