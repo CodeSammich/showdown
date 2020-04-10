@@ -1,9 +1,9 @@
+import torch
 import torch.nn as nn
-import torch.nn,.functional as F
-import torch.optim as optim
+import torch.nn.functional as F
 
 class DeepQNetwork(nn.Module):
-    def __init__(self, state_size, action_size, seed=17):
+    def __init__(self, seed=17):
         super(DeepQNetwork, self).__init__() # calls nn.Module __init__
 
         self.seed = torch.manual_seed(seed)
@@ -13,19 +13,20 @@ class DeepQNetwork(nn.Module):
         self.fc2 = nn.Linear(512, 512)
         self.fc3 = nn.Linear(512, 512)
         self.logits = nn.Linear(512, 10)
-
-        # Loss / Optimizer
-        self.criterion = nn.MSELoss()
-        self.optimizer = optim.Adam(self.model.parameters) # lr = 0.001, momentum = 0.9 default
+        self.softmax = nn.Softmax()
 
     def forward(self, state):
         # one vector of the entire state
         # state vector contains: weather, field, etc..., opponent's active, my active, my remaining
         # drawback: it forgets previously released opponent's pokemon
-        moves = self.fc1(moves)
-        moves = F.relu(moves)
-        moves = self.fc2(moves)
-        moves = F.relu(moves)
-        moves = self.fc3(moves)
-        moves = F.relu(moves)
-        return moves
+        state = self.fc1(state)
+        state = F.relu(state)
+        state = self.fc2(state)
+        state = F.relu(state)
+        state = self.fc3(state)
+        state = F.relu(state)
+        state = F.logits(state)
+        state = F.softmax(state)
+        return state
+
+    #TODO: pre-training function before the RL Agent class uses it for state generation

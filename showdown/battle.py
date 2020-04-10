@@ -371,10 +371,11 @@ class Battler:
 class Pokemon:
 
     def __init__(self, name: str, level: int):
-        # Single Number, Should be 1-hot
+        # Single Number, Should be 1-hot (1136)
         self.name = normalize_name(name)
         self.base_name = self.name
-        # Single Number
+        # Single Number, ignore the level because we assume Lv100
+        # if it's not level 100, it would be encoded in name (e.g. Rattata)
         self.level = level
 
         try:
@@ -388,7 +389,7 @@ class Pokemon:
         # 6 numbers
         self.stats = calculate_stats(self.base_stats, self.level)
 
-        # 1 number
+        # can ignore max_hp because it's noisy (hp% is pretty much all we care/know)
         self.max_hp = self.stats.pop(constants.HITPOINTS)
         # 1 number as percent
         self.hp = self.max_hp
@@ -398,33 +399,42 @@ class Pokemon:
 
         # TODO: Encode, currently not neccessary
         self.ability = None
-        # Number between 1-17^2
+        # Number between 1-17
         self.types = pokedex[self.name][constants.TYPES]
-        # Single number, should be 1-hot
+        # should be ignored in the vector since we have no list of items available
+        # closest item encoding we have is in that boolean below for life orb / choice
         self.item = constants.UNKNOWN_ITEM
 
         # Single number (0,1)
         self.fainted = False
-        # 4 Numbers, should be 1-hot
+        # for now, ignore. maybe one-hot encode moves later?
         self.moves = []
-        # Single number 
+        # one hot encoding for all statuses (0 or 1)
+        # burn, freeze, sleep, paralysis, poison, badly poison (6 total)
+        # badly poison ranges from 0-6, since there are poison stages
         self.status = None
-        # 1 or 0 for each in dict
+        # 5 total volatile statuses 
+        # confusion, leech seed, substitute, taunt, partially trapped, transformed
         self.volatile_statuses = []
-        # 6 numbers
+        # 7 stat boost numbers (-6 to 6 for each stat)
         self.boosts = defaultdict(lambda: 0)
+        # ignore 
         self.can_mega_evo = False
         self.can_ultra_burst = False
         self.can_dynamax = False
         self.is_mega = False
-        # 0 or 1
+        # either choice or life orb, so these are opposing or both 0
         self.can_have_choice_item = True
-        # 0 or 1
         self.can_have_life_orb = True
 
     def to_vector(self):
-        # Convert Pokemon's individual stats to a single vector 
-        #stats = torch.IntTensor(
+        '''
+        Convert Pokemon's individual stats to a single vector 
+        1181 total categories we care about, mostly one-hot pokemon names
+        Currently ignores moves due to lack of organized dataset of all available moves
+        '''
+        stats = torch.IntTensor(1181)
+        logger.debug('pokedex keys, aka pokemon names: {}'.format(pokedex.keys()))
         return []
 
     def forme_change(self, new_pkmn_name):
