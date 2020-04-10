@@ -46,35 +46,37 @@ def parse_configs():
 
 def create_challenge_bot():
     conf = Config()
-    conf.battle_bot_module = "safest"
+    conf.battle_bot_module = "rand_bot"
     conf.save_replay = config.save_replay
     conf.use_relative_weights = config.use_relative_weights
     conf.gambit_exe_path = config.gambit_exe_path
     conf.search_depth = config.search_depth
     conf.websocket_uri = "localhost:8000"
-    conf.username = "acceptGary"
-    conf.password = "password"
+    conf.username = "cbninjask5uber"
+    conf.password = "aiaccount1"
     conf.bot_mode = "CHALLENGE_USER"
-    conf.team_name = None
+    conf.team_name = "gen8/ou/clef_sand"
     conf.pokemon_mode = "gen8ou"
     conf.run_count = 1
-    conf.user_to_challenge = "AcceptBot"
+    conf.user_to_challenge = "AcceptGary"
+    conf.LOG_LEVEL = 'CRITICAL'
     return conf
 
 def create_accept_bot():
     conf = Config()
-    conf.battle_bot_module = "safest"
+    conf.battle_bot_module = "nn_bot"
     conf.save_replay = config.save_replay
     conf.use_relative_weights = config.use_relative_weights
     conf.gambit_exe_path = config.gambit_exe_path
     conf.search_depth = config.search_depth
     conf.websocket_uri = "localhost:8000"
-    conf.username = "monkeyAttak"
-    conf.password = "424242"
+    conf.username = "AcceptGary"
+    conf.password = "password"
     conf.bot_mode = "ACCEPT_CHALLENGE"
-    conf.team_name = None
+    conf.team_name = "gen8/ou/band_toad"
     conf.pokemon_mode = "gen8ou"
     conf.run_count = 1
+    conf.LOG_LEVEL = 'CRITICAL'
     return conf
 
 def force_global_config(conf):
@@ -110,7 +112,7 @@ async def showdown(challenge):
         conf = create_accept_bot()
     force_global_config(conf)
     config = conf
-    init_logging("DEBUG")
+    init_logging("CRITICAL")
     apply_mods(config.pokemon_mode)
 
     original_pokedex = deepcopy(pokedex)
