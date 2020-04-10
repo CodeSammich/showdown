@@ -39,6 +39,7 @@ from showdown.helpers import normalize_name
 from showdown.helpers import calculate_stats
 
 import torch
+from showdown.engine.damage_calculator import pokemon_type_indicies
 
 logger = logging.getLogger(__name__)
 
@@ -436,9 +437,27 @@ class Pokemon:
 
         output: torch.IntTensor
         '''
-        stats = torch.IntTensor(1181)
-        logger.debug('pokedex keys, aka pokemon names: {}'.format(pokedex.keys()))
-        return stats
+        # TODO: pls comment
+        vector = []
+        pokemon_index = list(pokedex.keys()).index(self.name)
+        one_hot_pokemon = [int(w == pokemon_index) for w in list(pokedex.keys())]
+        vector.append(torch.IntTensor(one_hot_pokemon))
+        base_stats = torch.IntTensor(list(self.base_stats.values()))
+        vector.append(base_stats)
+        vector.append(torch.IntTensor([self.hp*100/self.max_hp]))
+        type_indices = [pokemon_type_indicies[x] for x in self.types]
+        one_hot_types = [int(w == pokemon_index) for w in type_indices]
+        vector.append(torch.IntTensor(one_hot_types))
+        vector.append(torch.IntTensor([self.fainted]))
+        one_hot_status = [int(w == self.status) for w in constants.NON_VOLATILE_STATUSES]
+        vector.append(torch.IntTensor(one_hot_status))
+        volatile_statuses = {constants.TAUNT, constants.LEECH_SEED, constants.CONFUSION}
+        one_hot_vola = [int(w in self.volatile_statuses) for w in volatile_statuses]
+        vector.append(torch.IntTensor(one_hot_vola))
+        vector.append(torch.IntTensor(list(dict(self.boosts).values())))
+        vector.append(torch.IntTensor([self.can_have_choice_item]))
+        vector.append(torch.IntTensor([self.can_have_life_orb]))
+        return vector
 
     def forme_change(self, new_pkmn_name):
         hp_percent = float(self.hp) / self.max_hp
