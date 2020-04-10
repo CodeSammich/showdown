@@ -38,6 +38,7 @@ from showdown.helpers import set_makes_sense
 from showdown.helpers import normalize_name
 from showdown.helpers import calculate_stats
 
+import torch
 
 logger = logging.getLogger(__name__)
 
@@ -432,10 +433,12 @@ class Pokemon:
         Convert Pokemon's individual stats to a single vector 
         1181 total categories we care about, mostly one-hot pokemon names
         Currently ignores moves due to lack of organized dataset of all available moves
+
+        output: torch.IntTensor
         '''
         stats = torch.IntTensor(1181)
         logger.debug('pokedex keys, aka pokemon names: {}'.format(pokedex.keys()))
-        return []
+        return stats
 
     def forme_change(self, new_pkmn_name):
         hp_percent = float(self.hp) / self.max_hp
