@@ -1,5 +1,6 @@
 import constants
 from data import all_move_json
+from data import pokedex
 from showdown.battle import Battle
 from showdown.engine.damage_calculator import calculate_damage
 from showdown.engine.find_state_instructions import update_attacking_move
@@ -28,10 +29,9 @@ class BattleBot(Battle):
 
         # most_damage = -1
         choice = None
-        print(len(moves))
-        rand = random.randint(0, len(moves) - 1)
-        print(rand)
-        choice = moves[rand]
+        print(self.user.active.to_vector())
+        rand = random.randint(0, len(my_options) - 1)
+        choice = my_options[rand]
         # for move in moves:
         #     damage_amounts = calculate_damage(state, constants.SELF, move, constants.DO_NOTHING_MOVE)
 

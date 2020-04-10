@@ -10,10 +10,10 @@ class DeepQNetwork(nn.Module):
         self.seed = torch.manual_seed(seed)
 
         # start by copying http://cs230.stanford.edu/projects_fall_2018/reports/12447633.pdf network
-        self.fc1 = nn.Linear(512, 512)
+        self.fc1 = nn.Linear(8175, 512)
         self.fc2 = nn.Linear(512, 512)
         self.fc3 = nn.Linear(512, 512)
-        self.logits = nn.Linear(512, 10)
+        self.logits = nn.Linear(512, 9)
         self.softmax = nn.Softmax()
 
     def forward(self, state):
