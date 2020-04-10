@@ -472,8 +472,6 @@ class Pokemon:
         # Add possible items 
         vector.append(torch.IntTensor([self.can_have_choice_item]))
         vector.append(torch.IntTensor([self.can_have_life_orb]))
-        for v in vector:
-            print(v.shape)
         return torch.cat(vector, dim=0)
 
     def forme_change(self, new_pkmn_name):

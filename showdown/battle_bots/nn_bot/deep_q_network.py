@@ -26,7 +26,7 @@ class DeepQNetwork(nn.Module):
         state = F.relu(state)
         state = self.fc3(state)
         state = F.relu(state)
-        state = F.logits(state)
+        state = self.logits(state)
         state = F.softmax(state)
         return state
 

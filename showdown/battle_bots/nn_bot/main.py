@@ -61,7 +61,7 @@ class BattleBot(Battle):
             # convert state to matrix via state_to_matrix
             matrix = self.state_to_vector()
             model = DeepQNetwork()
-            model(matrix.float)
+            matrix = model(matrix.float())
             ind = matrix[0:len(my_options)-1].argmax()
 
             # get logits layer and take the best moves (highest value after softmax)
