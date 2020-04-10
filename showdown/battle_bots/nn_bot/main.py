@@ -72,15 +72,23 @@ class BattleBot(Battle):
         state_matrix = []
 
         # convert weather to a 6x1 tensor of 0s, set approriate weather flag to 1
-        weather = [constants.RAIN, constants.SUN, constants.SAND, \
-                constants.HAIL, constants.DESOLATE_LAND, constants.HEAVY_RAIN]
+        weather = [constants.RAIN, 
+                  constants.SUN,
+                  constants.SAND,
+                  constants.HAIL]
         one_hot_weather = [int(w == state.weather) for w in weather] # dang, it's hot out!
         weather_vec = torch.IntTensor(one_hot_weather)
         state_matrix.append(weather_vec)
 
-        # convert field to a ?x? zeros tensor, set appropriate flag to 1
-        # TODO: what can field be?
-        field = state.field
+        # convert field to a 4x1 zeros tensor, set appropriate flag to 1
+        # field == terrain (terrible naming by original dev)
+        field = [constants.ELECTRIC_TERRAIN,
+                constants.GRASSY_TERRAIN,
+                constants.MISTY_TERRAIN,
+                constants.PSYCHIC_TERRAIN]
+        one_hot_field = [int(w == state.field) for w in weather] # LET MY PEOPLE GO
+        field_vec = torch.IntTensor(one_hot_field)
+        state_matrix.append(field_vec)
 
         # convert field to a 1x1  tensor
         trick_room_vec = torch.IntTensor([state.trick_room])
