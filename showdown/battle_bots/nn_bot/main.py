@@ -12,12 +12,11 @@ import torch.optim as optim
 class BattleBot(Battle):
     def __init__(self, *args, **kwargs):
         super(BattleBot, self).__init__(*args, **kwargs)
-        self.network = DeepQNetwork() 
-        # Loss / Optimizer
-        self.criterion = nn.MSELoss()
-        self.optimizer = optim.Adam(self.network.parameters())
 
-    def find_best_move(self):
+    def find_best_move(self): # calls best_move to start even when it does not go first?
+        network = DeepQNetwork()
+        criterion = nn.MSELoss()
+        optimizer = optim.Adam(network.parameters())
         state = self.create_state()
         my_options = self.get_all_options()[0]
 
@@ -34,7 +33,7 @@ class BattleBot(Battle):
 
         # THIS WHOLE SECTION SHOULD BE REPLACED BY "find_move" in Agent class
         # pick moves logic for non-nn based on simple most damage formula
-        if self.network == None:
+        if network == None:
             most_damage = -1
             choice = None
             for move in moves:
