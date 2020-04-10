@@ -20,6 +20,27 @@ search_depth = 2
 
 save_replay = False
 
+class Config():
+    def __init__(self):
+        self.battle_bot_module = None
+        self.websocket_uri = None
+        self.username = None
+        self.password = None
+        self.bot_mode = None
+        self.team_name = None
+        self.pokemon_mode = None
+        self.run_count = None
+        self.user_to_challenge = None
+        self.gambit_exe_path = ""
+        self.greeting_message = 'hf'
+        self.battle_ending_message = 'gg'
+
+        self.use_relative_weights = False
+        self.damage_calc_type = 'average'
+        self.search_depth = 2
+
+        self.save_replay = False
+
 
 class CustomFormatter(logging.Formatter):
     def format(self, record):
