@@ -439,25 +439,42 @@ class Pokemon:
         '''
         # TODO: pls comment
         vector = []
+        # Index pokemon as number as a one-hot bector
         pokemon_index = list(pokedex.keys()).index(self.name)
         one_hot_pokemon = [int(w == pokemon_index) for w in list(pokedex.keys())]
         vector.append(torch.IntTensor(one_hot_pokemon))
+        # Add Base stats
         base_stats = torch.IntTensor(list(self.base_stats.values()))
         vector.append(base_stats)
-        vector.append(torch.IntTensor([self.hp*100/self.max_hp]))
+        # Add Percent hp
+        if self.hp == 0 or self.max_hp == 0:
+            vector.append(torch.IntTensor([0]))
+        else:
+            vector.append(torch.IntTensor([self.hp*100/self.max_hp]))
+        # Add types
         type_indices = [pokemon_type_indicies[x] for x in self.types]
+        # If only 1 type, add a second type
+        if len(type_indices) == 1:
+            type_indices = [type_indices[0], 18]
         one_hot_types = [int(w == pokemon_index) for w in type_indices]
         vector.append(torch.IntTensor(one_hot_types))
+        # Add if pokemon is fainted
         vector.append(torch.IntTensor([self.fainted]))
+        # Add Status
         one_hot_status = [int(w == self.status) for w in constants.NON_VOLATILE_STATUSES]
         vector.append(torch.IntTensor(one_hot_status))
+        # Add Volative Status
         volatile_statuses = {constants.TAUNT, constants.LEECH_SEED, constants.CONFUSION}
         one_hot_vola = [int(w in self.volatile_statuses) for w in volatile_statuses]
         vector.append(torch.IntTensor(one_hot_vola))
+        # Add boosts
         vector.append(torch.IntTensor(list(dict(self.boosts).values())))
+        # Add possible items 
         vector.append(torch.IntTensor([self.can_have_choice_item]))
         vector.append(torch.IntTensor([self.can_have_life_orb]))
-        return vector
+        for v in vector:
+            print(v.shape)
+        return torch.cat(vector, dim=0)
 
     def forme_change(self, new_pkmn_name):
         hp_percent = float(self.hp) / self.max_hp

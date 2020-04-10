@@ -30,8 +30,8 @@ class BattleBot(Battle):
         # most_damage = -1
         choice = None
         print(self.user.active.to_vector())
-        rand = random.randint(0, len(moves) - 1)
-        choice = moves[rand]
+        rand = random.randint(0, len(my_options) - 1)
+        choice = my_options[rand]
         # for move in moves:
         #     damage_amounts = calculate_damage(state, constants.SELF, move, constants.DO_NOTHING_MOVE)
 

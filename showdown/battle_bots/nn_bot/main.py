@@ -60,10 +60,12 @@ class BattleBot(Battle):
             ##### TODO: wrap through Agent later on, this is just for testing
             # convert state to matrix via state_to_matrix
             matrix = self.state_to_vector()
-            print(matrix)
+            model = DeepQNetwork()
+            model(matrix.float)
+            ind = matrix[0:len(my_options)-1].argmax()
 
             # get logits layer and take the best moves (highest value after softmax)
-            choice = moves[0]
+            choice = my_options[ind]
 
         return format_decision(self, choice)
 
