@@ -29,7 +29,6 @@ class BattleBot(Battle):
 
         # most_damage = -1
         choice = None
-        print(self.user.active.to_vector())
         rand = random.randint(0, len(my_options) - 1)
         choice = my_options[rand]
         # for move in moves:

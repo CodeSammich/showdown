@@ -13,6 +13,11 @@ import torch.optim as optim
 class BattleBot(Battle):
     def __init__(self, *args, **kwargs):
         super(BattleBot, self).__init__(*args, **kwargs)
+        # save model after init, can't make object attribute due to pickling errors w/ deepcopy
+        model = DeepQNetwork()
+        torch.save(model.state_dict(), 'nn_bot_trained')
+
+        # init env conditions for vectorize
         self.weather_conds = [constants.RAIN, 
                               constants.SUN,
                               constants.SAND,
@@ -32,6 +37,7 @@ class BattleBot(Battle):
 
         moves = []
         switches = []
+        print('possible moves: {}'.format(my_options))
         for option in my_options:
             if option.startswith(constants.SWITCH_STRING + " "):
                 switches.append(option)
@@ -60,9 +66,18 @@ class BattleBot(Battle):
             ##### TODO: wrap through Agent later on, this is just for testing
             # convert state to matrix via state_to_matrix
             matrix = self.state_to_vector()
-            model = DeepQNetwork()
+            # reinitialize and load weights
+            model = DeepQNetwork() 
+            model.load_state_dict(torch.load('nn_bot_trained'))
+
+            # expected utility Q(s,a) = R_{t+1} + gamma*max_a{[Q(s,a)]}
+            # loss: output vs. expected utility 
+
+            # pass input thorugh
             matrix = model(matrix.float())
-            ind = matrix[0:len(my_options)-1].argmax()
+            print('logits layer: matrix', matrix)
+            # TODO: account for my_options shrinking due to death
+            ind = matrix[0:len(my_options)].argmax()
 
             # get logits layer and take the best moves (highest value after softmax)
             choice = my_options[ind]
