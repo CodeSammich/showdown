@@ -98,12 +98,11 @@ async def showdown(accept, agent = None):
     agent: specify str agent name (i.e rand_bot) or a DQNAgent. If DQNAgent will choose nn_bot
     """
     if accept:
-        conf = create_accept_bot(agent)  # hardcoded agent
+        conf = create_accept_bot(agent)  # accept gary
     else:
-        conf = create_challenge_bot(agent)  # nn bot
+        conf = create_challenge_bot(agent)  # cbninjask5uber
 
     config = conf
-    init_logging("DEBUG")
     apply_mods(config.pokemon_mode)
 
     original_pokedex = deepcopy(pokedex)
@@ -150,6 +149,9 @@ async def train_episode(agent1, agent2):
     await asyncio.gather(showdown(accept=True, agent=agent1), showdown(accept=False, agent=agent2))
 
 async def main():
+    """Call this code only once"""
+    init_logging("DEBUG")
+
     """Training params"""
     episodes = 11
     state_size = 8175
