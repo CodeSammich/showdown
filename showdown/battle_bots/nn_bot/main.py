@@ -15,8 +15,7 @@ class BattleBot(Battle):
     def __init__(self, *args, **kwargs):
         super(BattleBot, self).__init__(*args, **kwargs)
         # save model after init, can't make object attribute due to pickling errors w/ deepcopy
-        model = DeepQNetwork()
-        torch.save(model.state_dict(), 'nn_bot_trained')
+        #torch.save(model.state_dict(), 'nn_bot_trained')
 
         # init env conditions for vectorize
         self.weather_conds = [constants.RAIN, 
@@ -32,11 +31,20 @@ class BattleBot(Battle):
         self.previous_action = None
 
     def find_best_move(self, agent=None): # calls best_move to start even when it does not go first?
-        network = DeepQNetwork()
-        criterion = nn.MSELoss()
-        optimizer = optim.Adam(network.parameters())
+        # network = DeepQNetwork()
+        # criterion = nn.MSELoss()
+        # optimizer = optim.Adam(network.parameters())
         state = self.create_state()
         my_options = self.get_all_options()[0]
+        # Get all options (even impossible)
+        # all_moves = self.user.active.moves
+        # for pkmn in self.user.reserve:
+        #     all_moves.append("{} {}".format(constants.SWITCH_STRING, pkmn.name))
+        # print(all_moves)
+        # l = []
+        # for item in all_moves:
+        #     l.append(int(item in my_options))
+        # print(l)
 
         moves = []
         switches = []
@@ -52,7 +60,7 @@ class BattleBot(Battle):
 
         # THIS WHOLE SECTION SHOULD BE REPLACED BY "find_move" in Agent class
         # pick moves logic for non-nn based on simple most damage formula
-        if network == None:
+        if agent == None:
             most_damage = -1
             choice = None
             for move in moves:
@@ -74,20 +82,22 @@ class BattleBot(Battle):
 
             matrix = self.state_to_vector()
             # reinitialize and load weights
-            model = DeepQNetwork() 
-            model.load_state_dict(torch.load('nn_bot_trained'))
+            # model = DeepQNetwork() 
+            # model.load_state_dict(torch.load('nn_bot_trained'))
 
 
             # expected utility Q(s,a) = R_{t+1} + gamma*max_a{[Q(s,a)]}
             # loss: output vs. expected utility 
 
             # pass input thorugh
-            matrix = model(matrix.float())
-          #  print('logits layer: matrix', matrix)
+            ind = agent.act(matrix)
+            # matrix = model(matrix.float())
+            # print('logits layer: matrix', matrix)
             # TODO: account for my_options shrinking due to death
-            ind = matrix[0:len(my_options)].argmax()
-            previous_state = state
-            previous_action = ind
+            # ind = matrix[0:len(my_options)].argmax()
+            ind = ind % len(my_options)
+            self.previous_state = state
+            self.previous_action = ind
 
             # get logits layer and take the best moves (highest value after softmax)
             choice = my_options[ind]

@@ -22,16 +22,22 @@ def battle_is_finished(msg):
     return constants.WIN_STRING in msg and constants.CHAT_STRING not in msg
 
 
-async def async_pick_move(battle):
+async def async_pick_move(battle, agent=None):
     battle_copy = deepcopy(battle)
     if battle_copy.request_json:
         battle_copy.user.from_json(battle_copy.request_json)
 
     loop = asyncio.get_event_loop()
-    with concurrent.futures.ThreadPoolExecutor() as pool:
-        best_move = await loop.run_in_executor(
-            pool, battle_copy.find_best_move
-        )
+    if agent == None:  # so we are dealing with a non neural network bot
+        with concurrent.futures.ThreadPoolExecutor() as pool:
+            best_move = await loop.run_in_executor(
+                pool, battle_copy.find_best_move
+            )
+    else:  # modify this?
+        with concurrent.futures.ThreadPoolExecutor() as pool:
+            best_move = await loop.run_in_executor(
+                pool, battle_copy.find_best_move, agent
+            )
     choice = best_move[0]
     if constants.SWITCH_STRING in choice:
         battle.user.last_used_move = LastUsedMove(battle.user.active.name, "switch {}".format(choice.split()[-1]), battle.turn)
@@ -40,12 +46,12 @@ async def async_pick_move(battle):
     return best_move
 
 
-async def handle_team_preview(battle, ps_websocket_client):
+async def handle_team_preview(battle, ps_websocket_client, agent = None):
     battle_copy = deepcopy(battle)
     battle_copy.user.active = Pokemon.get_dummy()
     battle_copy.opponent.active = Pokemon.get_dummy()
 
-    best_move = await async_pick_move(battle_copy)
+    best_move = await async_pick_move(battle_copy, agent)
     size_of_team = len(battle.user.reserve) + 1
     team_list_indexes = list(range(1, size_of_team))
     choice_digit = int(best_move[0].split()[-1])
@@ -90,7 +96,7 @@ async def initialize_battle_with_tag(ps_websocket_client: PSWebsocketClient, set
             return battle, opponent_id, user_json
 
 
-async def start_random_battle(ps_websocket_client: PSWebsocketClient, pokemon_battle_type):
+async def start_random_battle(ps_websocket_client: PSWebsocketClient, pokemon_battle_type, agent=None):
     battle, opponent_id, user_json = await initialize_battle_with_tag(ps_websocket_client)
     battle.battle_type = constants.RANDOM_BATTLE
     battle.generation = pokemon_battle_type[:4]
@@ -108,13 +114,13 @@ async def start_random_battle(ps_websocket_client: PSWebsocketClient, pokemon_ba
                     await async_update_battle(battle, line)
 
             # first move needs to be picked here
-            best_move = await async_pick_move(battle)
+            best_move = await async_pick_move(battle, agent)
             await ps_websocket_client.send_message(battle.battle_tag, best_move)
 
             return battle
 
 
-async def start_standard_battle(ps_websocket_client: PSWebsocketClient, pokemon_battle_type):
+async def start_standard_battle(ps_websocket_client: PSWebsocketClient, pokemon_battle_type, agent=None):
     battle, opponent_id, user_json = await initialize_battle_with_tag(ps_websocket_client, set_request_json=False)
     battle.battle_type = constants.STANDARD_BATTLE
     battle.generation = pokemon_battle_type[:4]
@@ -135,17 +141,17 @@ async def start_standard_battle(ps_websocket_client: PSWebsocketClient, pokemon_
             opponent_pokemon.append(split_line[3])
 
     battle.initialize_team_preview(user_json, opponent_pokemon, pokemon_battle_type)
-    await handle_team_preview(battle, ps_websocket_client)
+    await handle_team_preview(battle, ps_websocket_client, agent)
 
     return battle
 
 
-async def start_battle(ps_websocket_client, pokemon_battle_type):
+async def start_battle(ps_websocket_client, pokemon_battle_type, agent=None):
     if "random" in pokemon_battle_type:
         Scoring.POKEMON_ALIVE_STATIC = 30  # random battle benefits from a lower static score for an alive pkmn
-        battle = await start_random_battle(ps_websocket_client, pokemon_battle_type)
+        battle = await start_random_battle(ps_websocket_client, pokemon_battle_type, agent)
     else:
-        battle = await start_standard_battle(ps_websocket_client, pokemon_battle_type)
+        battle = await start_standard_battle(ps_websocket_client, pokemon_battle_type, agent)
 
     await ps_websocket_client.send_message(battle.battle_tag, [config.greeting_message])
     await ps_websocket_client.send_message(battle.battle_tag, ['/timer on'])
@@ -153,10 +159,10 @@ async def start_battle(ps_websocket_client, pokemon_battle_type):
     return battle
 
 # TODO agent probably can have this return state, and action,
-async def pokemon_battle(ps_websocket_client, pokemon_battle_type, conf): # this is the level at where  we can probably perform a "step"
+async def pokemon_battle(ps_websocket_client, pokemon_battle_type, conf, agent = None): # this is the level at where  we can probably perform a "step"
     global config
     config = conf
-    battle = await start_battle(ps_websocket_client, pokemon_battle_type)
+    battle = await start_battle(ps_websocket_client, pokemon_battle_type, agent)
     config = conf
     while True:
 
@@ -170,26 +176,6 @@ async def pokemon_battle(ps_websocket_client, pokemon_battle_type, conf): # this
         else:
             action_required = await async_update_battle(battle, msg)
             if action_required and not battle.wait:
-                best_move = await async_pick_move(battle)  # TODO agent best_move is action chosen
-                await ps_websocket_client.send_message(battle.battle_tag, best_move)
-
-async def train_pokemon(ps_websocket_client, pokemon_battle_type, agent):
-    battle = await start_battle(ps_websocket_client, pokemon_battle_type)
-    battle.agent = agent  # attach agent to pokemon so nn_bot can make moves
-    battle.learn_list = [0, 0, 0, 0]  # will (contain, state, action, next_state, done) that agent takes in step
-    while True:
-
-        msg = await ps_websocket_client.receive_message()
-        if battle_is_finished(msg):
-            winner = msg.split(constants.WIN_STRING)[-1].split('\n')[0].strip()
-            logger.debug("Winner: {}".format(winner))
-            await ps_websocket_client.send_message(battle.battle_tag, [config.battle_ending_message])
-            await ps_websocket_client.leave_battle(battle.battle_tag, save_replay=config.save_replay)
-            return winner
-        else:
-            action_required = await async_update_battle(battle, msg)
-            if action_required and not battle.wait:
-                best_move, state, action = await async_pick_move(battle)  # async_pick_move should to state and action to battle.learn_list TODO agent best_move is action chosen
-                battle.learn_list[0] = state
-                battle.learn_list[1] = action
+                #curr_state, action - reward?
+                best_move = await async_pick_move(battle, agent)  # TODO agent best_move is action chosen
                 await ps_websocket_client.send_message(battle.battle_tag, best_move)
