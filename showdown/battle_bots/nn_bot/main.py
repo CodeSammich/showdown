@@ -6,6 +6,7 @@ from showdown.engine.find_state_instructions import update_attacking_move
 from ..helpers import format_decision
 
 from showdown.battle_bots.nn_bot.deep_q_network import DeepQNetwork
+from showdown.engine.evaluate import evaluate
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -27,8 +28,10 @@ class BattleBot(Battle):
                            constants.MISTY_TERRAIN,
                            constants.PSYCHIC_TERRAIN]
         self.side_conds = list(constants.COURT_CHANGE_SWAPS) # init for stable
+        self.previous_state = None
+        self.previous_action = None
 
-    def find_best_move(self): # calls best_move to start even when it does not go first?
+    def find_best_move(self, agent=None): # calls best_move to start even when it does not go first?
         network = DeepQNetwork()
         criterion = nn.MSELoss()
         optimizer = optim.Adam(network.parameters())
@@ -65,10 +68,15 @@ class BattleBot(Battle):
         else:
             ##### TODO: wrap through Agent later on, this is just for testing
             # convert state to matrix via state_to_matrix
+            # Calculate New Reward
+            if self.previous_state:
+                agent.step(self.previous_state, self.previous_action, evaluate(state), state)
+
             matrix = self.state_to_vector()
             # reinitialize and load weights
             model = DeepQNetwork() 
             model.load_state_dict(torch.load('nn_bot_trained'))
+
 
             # expected utility Q(s,a) = R_{t+1} + gamma*max_a{[Q(s,a)]}
             # loss: output vs. expected utility 
@@ -78,6 +86,8 @@ class BattleBot(Battle):
           #  print('logits layer: matrix', matrix)
             # TODO: account for my_options shrinking due to death
             ind = matrix[0:len(my_options)].argmax()
+            previous_state = state
+            previous_action = ind
 
             # get logits layer and take the best moves (highest value after softmax)
             choice = my_options[ind]

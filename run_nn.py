@@ -44,9 +44,47 @@ def parse_configs():
         config.user_to_challenge = env("USER_TO_CHALLENGE")
     init_logging(env("LOG_LEVEL", "DEBUG"))
 
+def create_challenge_bot2():
+    conf = Config()
+    conf.battle_bot_module = "nn_bot"
+    conf.battle_bot_module = "rand_bot"
+    conf.save_replay = config.save_replay
+    conf.use_relative_weights = config.use_relative_weights
+    conf.gambit_exe_path = config.gambit_exe_path
+    conf.search_depth = config.search_depth
+    conf.websocket_uri = "localhost:8000"
+    conf.username = "cbninjask4uber"
+    conf.password = "bob'sawesome"
+    conf.bot_mode = "CHALLENGE_USER"
+    conf.team_name = "gen8/ou/clef_sand"
+    conf.pokemon_mode = "gen8ou"
+    conf.run_count = 1
+    conf.user_to_challenge = "monkeyAttak"
+    conf.LOG_LEVEL = 'DEBUG'
+    return conf
+
+def create_accept_bot2():
+    conf = Config()
+    conf.battle_bot_module = "nn_bot"
+    conf.battle_bot_module = "rand_bot"
+    conf.save_replay = config.save_replay
+    conf.use_relative_weights = config.use_relative_weights
+    conf.gambit_exe_path = config.gambit_exe_path
+    conf.search_depth = config.search_depth
+    conf.websocket_uri = "localhost:8000"
+    conf.username = "monkeyAttak"
+    conf.password = "424242"
+    conf.bot_mode = "ACCEPT_CHALLENGE"
+    conf.team_name = "gen8/ou/band_toad"
+    conf.pokemon_mode = "gen8ou"
+    conf.run_count = 1
+    conf.LOG_LEVEL = 'DEBUG'
+    return conf
+
 def create_challenge_bot():
     conf = Config()
-    conf.battle_bot_module = "safest"
+    conf.battle_bot_module = "nn_bot"
+    conf.battle_bot_module = "rand_bot"
     conf.save_replay = config.save_replay
     conf.use_relative_weights = config.use_relative_weights
     conf.gambit_exe_path = config.gambit_exe_path
@@ -59,12 +97,12 @@ def create_challenge_bot():
     conf.pokemon_mode = "gen8ou"
     conf.run_count = 1
     conf.user_to_challenge = "AcceptGary"
-    conf.LOG_LEVEL = 'CRITICAL'
+    conf.LOG_LEVEL = 'DEBUG'
     return conf
 
 def create_accept_bot():
     conf = Config()
-    conf.battle_bot_module = "nn_bot"
+    conf.battle_bot_module = "rand_bot"
     conf.save_replay = config.save_replay
     conf.use_relative_weights = config.use_relative_weights
     conf.gambit_exe_path = config.gambit_exe_path
@@ -76,7 +114,7 @@ def create_accept_bot():
     conf.team_name = "gen8/ou/band_toad"
     conf.pokemon_mode = "gen8ou"
     conf.run_count = 1
-    conf.LOG_LEVEL = 'CRITICAL'
+    conf.LOG_LEVEL = 'DEBUG'
     return conf
 
 def force_global_config(conf):
@@ -104,15 +142,22 @@ def check_dictionaries_are_unmodified(original_pokedex, original_move_json):
         logger.debug("Pokedex JSON unmodified!")
 
 
-async def showdown(challenge):
+async def showdown(challenge, first):
     # config = parse_configs(env_path)
     if challenge:
-        conf = create_challenge_bot()
+        if first:
+            conf = create_challenge_bot()
+        else:
+            conf = create_challenge_bot2()
+
     else:
-        conf = create_accept_bot()
+        if first:
+            conf = create_accept_bot()
+        else:
+            conf = create_accept_bot2()
     #force_global_config(conf)
     config = conf
-    init_logging("CRITICAL")
+    init_logging("DEBUG")
     apply_mods(config.pokemon_mode)
 
     original_pokedex = deepcopy(pokedex)
@@ -151,9 +196,11 @@ async def showdown(challenge):
             break
 
 async def main():
-    asyncio.gather(showdown(False), showdown(True))
-    asyncio.sleep(5)
-    await asyncio.gather(showdown(False), showdown(True))
+    await asyncio.gather(showdown(False, False), showdown(True, False),
+    showdown(False, False), showdown(True, False))
+    #  showdown(False, True), showdown(True, True))
+    # asyncio.sleep(5)
+    # await asyncio.gather(showdown(False), showdown(True))
 
 if __name__ == "__main__":
     #asyncio.run(main())
