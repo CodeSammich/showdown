@@ -1,4 +1,5 @@
 import asyncio
+import numpy as np
 import json
 from copy import deepcopy
 
@@ -18,12 +19,19 @@ from data import all_move_json
 from data import pokedex
 from data.mods.apply_mods import apply_mods
 from showdown.battle_bots.nn_bot.DQNAgent import Agent
+from showdown.battle_bots.nn_bot.deep_q_network import DeepQNetwork
 
 logger = logging.getLogger(__name__)
 
-def create_challenge_bot():
+def create_challenge_bot(agent):
+    """
+    agent: specify str agent name (i.e rand_bot) or a DQNAgent. If DQNAgent will choose nn_bot
+    """
     conf = Config()
-    conf.battle_bot_module = "nn_bot"
+    if type(agent) == type(""):
+        conf.battle_bot_module = "rand_bot"
+    else:
+        conf.battle_bot_module = "nn_bot"
     conf.save_replay = config.save_replay
     conf.use_relative_weights = config.use_relative_weights
     conf.gambit_exe_path = config.gambit_exe_path
@@ -39,12 +47,15 @@ def create_challenge_bot():
     conf.LOG_LEVEL = 'DEBUG'
     return conf
 
-def create_accept_bot():
+def create_accept_bot(agent):
     """
-    A hardcoded bot
+    agent: specify str agent name (i.e rand_bot) or a DQNAgent. If DQNAgent will choose nn_bot
     """
     conf = Config()
-    conf.battle_bot_module = "rand_bot"
+    if type(agent) == type(""):
+        conf.battle_bot_module = "rand_bot"
+    else:
+        conf.battle_bot_module = "nn_bot"
     conf.save_replay = config.save_replay
     conf.use_relative_weights = config.use_relative_weights
     conf.gambit_exe_path = config.gambit_exe_path
@@ -58,11 +69,6 @@ def create_accept_bot():
     conf.run_count = 1
     conf.LOG_LEVEL = 'DEBUG'
     return conf
-
-def force_global_config(conf):
-    config.pokemon_mode = conf.pokemon_mode
-    config.greeting_message = conf.greeting_message
-    config.gambit_exe_path = conf.gambit_exe_path
 
 def check_dictionaries_are_unmodified(original_pokedex, original_move_json):
     # The bot should not modify the data dictionaries
@@ -84,11 +90,17 @@ def check_dictionaries_are_unmodified(original_pokedex, original_move_json):
         logger.debug("Pokedex JSON unmodified!")
 
 
-async def showdown(agent = None):
-    if agent == None:
-        conf = create_accept_bot()  # hardcoded agent
+async def showdown(accept, agent = None):
+    """
+    Will run through one battle
+
+    accept: boolean. If accept is true will create an accept_bot
+    agent: specify str agent name (i.e rand_bot) or a DQNAgent. If DQNAgent will choose nn_bot
+    """
+    if accept:
+        conf = create_accept_bot(agent)  # hardcoded agent
     else:
-        conf = create_challenge_bot()  # nn bot
+        conf = create_challenge_bot(agent)  # nn bot
 
     config = conf
     init_logging("DEBUG")
@@ -113,8 +125,10 @@ async def showdown(agent = None):
             await ps_websocket_client.search_for_match(config.pokemon_mode, team)
         else:
             raise ValueError("Invalid Bot Mode")
-
-        winner = await pokemon_battle(ps_websocket_client, config.pokemon_mode, config, agent)
+        if type(agent) == type(""):
+            winner = await pokemon_battle(ps_websocket_client, config.pokemon_mode, config, agent = None)
+        else:
+            winner = await pokemon_battle(ps_websocket_client, config.pokemon_mode, config, agent)
 
         if winner == config.username:
             wins += 1
@@ -129,18 +143,32 @@ async def showdown(agent = None):
         if battles_run >= config.run_count:
             break
 
-async def main():
+async def train_episode(agent1, agent2):
     """
     Goal of function is to put a neural network bot versus a hard coded bot
     """
-    agent = Agent(8175, 10, 42)
-    await asyncio.gather(showdown(agent), showdown())
-    #agent = Agent(8175, 10, 42)
-    #agent2 = Agent(8175, 10, 42)
-    #agent3 = Agent(8175, 10, 42)
-    #await asyncio.gather(showdown(agent), showdown(), ..., ...) # specify one of the agents as being a neural network
-    #combine_weights(agent, agent2, agent3)
+    await asyncio.gather(showdown(accept=True, agent=agent1), showdown(accept=False, agent=agent2))
 
+async def main():
+    """Training params"""
+    episodes = 11
+    state_size = 8175
+    actions = 9
+    merge_networks_time = 20  # run this many times and then merge multiple agents TODO
+    seed = np.random.randint(0, 50)
+    agent1 = Agent(state_size, 9, seed)
+
+    """main training loop"""
+    for episode in range(episodes):
+        print("episode", episode)
+        agent2 = "rand_bot"
+        await train_episode(agent1, agent2=agent2) # can probably run some of these in parallel using gather
+
+
+        if (episode+1) % merge_networks_time == 0:
+            pass  # TODO
+
+    print("done training")
 if __name__ == "__main__":
     asyncio.get_event_loop().run_until_complete(main())
     print("done")
