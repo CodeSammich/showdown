@@ -133,7 +133,7 @@ async def main():
     """
     Goal of function is to put a neural network bot versus a hard coded bot
     """
-    agent = Agent(8175, 10, 42)
+    agent = Agent(8175, 9, 42)
     await asyncio.gather(showdown(agent), showdown())
     #agent = Agent(8175, 10, 42)
     #agent2 = Agent(8175, 10, 42)

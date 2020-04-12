@@ -61,7 +61,7 @@ class Agent():
                 experience = self.memory.sample()
                 self.learn(experience, GAMMA)
 
-    def act(self, state, eps=0):
+    def act(self, state, mask, eps=0.2):
         """Returns action for given state as per current policy
         Params
         =======
@@ -76,9 +76,9 @@ class Agent():
 
         # Epsilon -greedy action selction
         if random.random() > eps:
-            return np.argmax(action_values.cpu().data.numpy())
+            return np.argmax(action_values.cpu().data.numpy()*mask)
         else:
-            return random.choice(np.arange(self.action_size))
+            return random.choice(np.nonzero(mask)[0])
 
     def learn(self, experiences, gamma):
         """Update value parameters using given batch of experience tuples.

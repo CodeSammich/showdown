@@ -37,14 +37,14 @@ class BattleBot(Battle):
         state = self.create_state()
         my_options = self.get_all_options()[0]
         # Get all options (even impossible)
-        # all_moves = self.user.active.moves
-        # for pkmn in self.user.reserve:
-        #     all_moves.append("{} {}".format(constants.SWITCH_STRING, pkmn.name))
-        # print(all_moves)
-        # l = []
-        # for item in all_moves:
-        #     l.append(int(item in my_options))
-        # print(l)
+        all_moves = []
+        for move in self.user.active.moves:
+            all_moves.append(str(move))
+        for pkmn in self.user.reserve:
+            all_moves.append("{} {}".format(constants.SWITCH_STRING, pkmn.name))
+        mask = []
+        for item in all_moves:
+            mask.append(int(item in my_options))
 
         moves = []
         switches = []
@@ -90,17 +90,18 @@ class BattleBot(Battle):
             # loss: output vs. expected utility 
 
             # pass input thorugh
-            ind = agent.act(matrix)
+            # gets index from all moves
+            ind = agent.act(matrix, mask)
             # matrix = model(matrix.float())
             # print('logits layer: matrix', matrix)
             # TODO: account for my_options shrinking due to death
             # ind = matrix[0:len(my_options)].argmax()
-            ind = ind % len(my_options)
+            # ind = ind % len(my_options)
             self.previous_state = state
             self.previous_action = ind
 
             # get logits layer and take the best moves (highest value after softmax)
-            choice = my_options[ind]
+            choice = all_moves[ind]
 
         return format_decision(self, choice)
 
