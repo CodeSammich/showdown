@@ -40,7 +40,7 @@ def create_challenge_bot(agent):
     conf.username = "cbninjask5uber"
     conf.password = "aiaccount1"
     conf.bot_mode = "CHALLENGE_USER"
-    conf.team_name = "gen8/ou/clef_sand"
+    conf.team_name = "gen8/ou/band_toad"
     conf.pokemon_mode = "gen8ou"
     conf.run_count = 1
     conf.user_to_challenge = "AcceptGary"
@@ -65,6 +65,7 @@ def create_accept_bot(agent):
     conf.password = "password"
     conf.bot_mode = "ACCEPT_CHALLENGE"
     conf.team_name = "gen8/ou/band_toad"
+    # conf.team_name = "gen8/ou/clef_sand"
     conf.pokemon_mode = "gen8ou"
     conf.run_count = 1
     conf.LOG_LEVEL = 'DEBUG'
@@ -150,7 +151,7 @@ async def train_episode(agent1, agent2):
 
 async def main():
     """Call this code only once"""
-    init_logging("DEBUG")
+    init_logging("CRITICAL")
 
     """Training params"""
     episodes = 11

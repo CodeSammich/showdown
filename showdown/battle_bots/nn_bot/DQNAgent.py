@@ -11,7 +11,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 BUFFER_SIZE = int(1e5)  # replay buffer size
-BATCH_SIZE = 64  # minibatch size
+BATCH_SIZE = 3  # minibatch size
 GAMMA = 0.99  # discount factor
 TAU = 1e-3  # for soft update of target parameters
 LR = 5e-4  # learning rate
@@ -37,6 +37,10 @@ class Agent():
         self.action_size = action_size
         self.seed = random.seed(seed)
 
+        # Store previous info
+        self.previous_state = None
+        self.previous_action = None
+
         # Q- Network
         self.qnetwork_local = QNetwork(state_size, action_size, seed).to(device)
         self.qnetwork_target = QNetwork(state_size, action_size, seed).to(device)
@@ -47,6 +51,10 @@ class Agent():
         self.memory = ReplayBuffer(action_size, BUFFER_SIZE, BATCH_SIZE, seed)
         # Initialize time step (for updating every UPDATE_EVERY steps)
         self.t_step = 0
+
+    def set_previous(self, state, action):
+        self.previous_state = state
+        self.previous_action = action
 
     def step(self, state, action, reward, next_step, done):
         # Save experience in replay memory

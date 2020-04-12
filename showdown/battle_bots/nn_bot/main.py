@@ -27,8 +27,6 @@ class BattleBot(Battle):
                            constants.MISTY_TERRAIN,
                            constants.PSYCHIC_TERRAIN]
         self.side_conds = list(constants.COURT_CHANGE_SWAPS) # init for stable
-        self.previous_state = None
-        self.previous_action = None
 
     def find_best_move(self, agent=None): # calls best_move to start even when it does not go first?
         # network = DeepQNetwork()
@@ -40,6 +38,10 @@ class BattleBot(Battle):
         all_moves = []
         for move in self.user.active.moves:
             all_moves.append(str(move))
+        if(len(all_moves) == 1):
+            all_moves.append(all_moves[0])
+            all_moves.append(all_moves[0])
+            all_moves.append(all_moves[0])
         for pkmn in self.user.reserve:
             all_moves.append("{} {}".format(constants.SWITCH_STRING, pkmn.name))
         mask = []
@@ -76,11 +78,11 @@ class BattleBot(Battle):
         else:
             ##### TODO: wrap through Agent later on, this is just for testing
             # convert state to matrix via state_to_matrix
-            # Calculate New Reward
-            if self.previous_state:
-                agent.step(self.previous_state, self.previous_action, evaluate(state), state)
-
             matrix = self.state_to_vector()
+            # Calculate New Reward
+            if agent.previous_state is not None:
+                agent.step(agent.previous_state, agent.previous_action, evaluate(state), matrix, False)
+
             # reinitialize and load weights
             # model = DeepQNetwork() 
             # model.load_state_dict(torch.load('nn_bot_trained'))
@@ -92,13 +94,8 @@ class BattleBot(Battle):
             # pass input thorugh
             # gets index from all moves
             ind = agent.act(matrix, mask)
-            # matrix = model(matrix.float())
-            # print('logits layer: matrix', matrix)
             # TODO: account for my_options shrinking due to death
-            # ind = matrix[0:len(my_options)].argmax()
-            # ind = ind % len(my_options)
-            self.previous_state = state
-            self.previous_action = ind
+            agent.set_previous(matrix, ind)
 
             # get logits layer and take the best moves (highest value after softmax)
             choice = all_moves[ind]
