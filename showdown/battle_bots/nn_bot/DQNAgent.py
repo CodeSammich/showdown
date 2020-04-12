@@ -96,7 +96,7 @@ class Agent():
         predicted_targets = self.qnetwork_local(states).gather(1, actions)
 
         with torch.no_grad():
-            labels_next = self.qnetwork_target(next_states).detach().max(1)[0].unsqueeze(1)
+            labels_next = self.qnetwork_target(next_state).detach().max(1)[0].unsqueeze(1)
 
         # .detach() ->  Returns a new Tensor, detached from the current graph.
         labels = rewards + (gamma * labels_next * (1 - dones))
@@ -124,7 +124,7 @@ class Agent():
 
 
 class ReplayBuffer:
-    """Fixed -size buffe to store experience tuples."""
+    """Fixed -size buffer to store experience tuples."""
 
     def __init__(self, action_size, buffer_size, batch_size, seed):
         """Initialize a ReplayBuffer object.

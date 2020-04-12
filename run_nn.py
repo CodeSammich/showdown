@@ -17,36 +17,13 @@ from showdown.websocket_client import PSWebsocketClient
 from data import all_move_json
 from data import pokedex
 from data.mods.apply_mods import apply_mods
-
+from showdown.battle_bots.nn_bot.DQNAgent import Agent
 
 logger = logging.getLogger(__name__)
 
-def parse_configs():
-    env = Env()
-    env.read_env()
-
-    config.battle_bot_module = env("BATTLE_BOT", 'safest')
-    config.save_replay = env.bool("SAVE_REPLAY", config.save_replay)
-    config.use_relative_weights = env.bool("USE_RELATIVE_WEIGHTS", config.use_relative_weights)
-    config.gambit_exe_path = env("GAMBIT_PATH", config.gambit_exe_path)
-    config.search_depth = int(env("MAX_SEARCH_DEPTH", config.search_depth))
-    config.greeting_message = env("GREETING_MESSAGE", config.greeting_message)
-    config.battle_ending_message = env("BATTLE_OVER_MESSAGE", config.battle_ending_message)
-    config.websocket_uri = env("WEBSOCKET_URI", "sim.smogon.com:8000")
-    config.username = env("PS_USERNAME")
-    config.password = env("PS_PASSWORD", "")
-    config.bot_mode = env("BOT_MODE")
-    config.team_name = env("TEAM_NAME", None)
-    config.pokemon_mode = env("POKEMON_MODE", constants.DEFAULT_MODE)
-    config.run_count = int(env("RUN_COUNT", 1))
-
-    if config.bot_mode == constants.CHALLENGE_USER:
-        config.user_to_challenge = env("USER_TO_CHALLENGE")
-    init_logging(env("LOG_LEVEL", "DEBUG"))
-
 def create_challenge_bot():
     conf = Config()
-    conf.battle_bot_module = "safest"
+    conf.battle_bot_module = "nn_bot"
     conf.save_replay = config.save_replay
     conf.use_relative_weights = config.use_relative_weights
     conf.gambit_exe_path = config.gambit_exe_path
@@ -63,8 +40,11 @@ def create_challenge_bot():
     return conf
 
 def create_accept_bot():
+    """
+    A hardcoded bot
+    """
     conf = Config()
-    conf.battle_bot_module = "nn_bot"
+    conf.battle_bot_module = "rand_bot"
     conf.save_replay = config.save_replay
     conf.use_relative_weights = config.use_relative_weights
     conf.gambit_exe_path = config.gambit_exe_path
@@ -104,13 +84,12 @@ def check_dictionaries_are_unmodified(original_pokedex, original_move_json):
         logger.debug("Pokedex JSON unmodified!")
 
 
-async def showdown(challenge):
-    # config = parse_configs(env_path)
-    if challenge:
-        conf = create_challenge_bot()
+async def showdown(agent = None):
+    if agent == None:
+        conf = create_accept_bot()  # hardcoded agent
     else:
-        conf = create_accept_bot()
-    #force_global_config(conf)
+        conf = create_challenge_bot()  # nn bot
+
     config = conf
     init_logging("CRITICAL")
     apply_mods(config.pokemon_mode)
@@ -135,7 +114,7 @@ async def showdown(challenge):
         else:
             raise ValueError("Invalid Bot Mode")
 
-        winner = await pokemon_battle(ps_websocket_client, config.pokemon_mode, config)
+        winner = await pokemon_battle(ps_websocket_client, config.pokemon_mode, config, agent)
 
         if winner == config.username:
             wins += 1
@@ -151,11 +130,17 @@ async def showdown(challenge):
             break
 
 async def main():
-    asyncio.gather(showdown(False), showdown(True))
-    asyncio.sleep(5)
-    await asyncio.gather(showdown(False), showdown(True))
+    """
+    Goal of function is to put a neural network bot versus a hard coded bot
+    """
+    agent = Agent(8175, 10, 42)
+    await asyncio.gather(showdown(agent), showdown())
+    #agent = Agent(8175, 10, 42)
+    #agent2 = Agent(8175, 10, 42)
+    #agent3 = Agent(8175, 10, 42)
+    #await asyncio.gather(showdown(agent), showdown(), ..., ...) # specify one of the agents as being a neural network
+    #combine_weights(agent, agent2, agent3)
 
 if __name__ == "__main__":
-    #asyncio.run(main())
     asyncio.get_event_loop().run_until_complete(main())
     print("done")

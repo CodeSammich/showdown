@@ -14,8 +14,7 @@ class BattleBot(Battle):
     def __init__(self, *args, **kwargs):
         super(BattleBot, self).__init__(*args, **kwargs)
         # save model after init, can't make object attribute due to pickling errors w/ deepcopy
-        model = DeepQNetwork()
-        torch.save(model.state_dict(), 'nn_bot_trained')
+        #torch.save(model.state_dict(), 'nn_bot_trained')
 
         # init env conditions for vectorize
         self.weather_conds = [constants.RAIN, 
@@ -28,7 +27,7 @@ class BattleBot(Battle):
                            constants.PSYCHIC_TERRAIN]
         self.side_conds = list(constants.COURT_CHANGE_SWAPS) # init for stable
 
-    def find_best_move(self): # calls best_move to start even when it does not go first?
+    def find_best_move(self, agent): # calls best_move to start even when it does not go first?
         network = DeepQNetwork()
         criterion = nn.MSELoss()
         optimizer = optim.Adam(network.parameters())
