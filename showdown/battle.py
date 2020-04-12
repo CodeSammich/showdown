@@ -98,13 +98,19 @@ class Battle(ABC):
         self.started = True
         self.rqid = user_json[constants.RQID]
 
-    def mega_evolve_possible(self):
-        return any(g in self.generation for g in constants.MEGA_EVOLVE_GENERATIONS) or 'nationaldex' in config.pokemon_mode
+    def mega_evolve_possible(self, conf=None):
+        #if conf != None:
+        #    config = conf
+        return False
+        #return any(g in self.generation for g in constants.MEGA_EVOLVE_GENERATIONS) or 'nationaldex' in config.pokemon_mode
 
     def prepare_battles(self, guess_mega_evo_opponent=True, join_moves_together=False):
         """Returns a list of battles based on this one
         The battles have the opponent's reserve pokemon's unknowns filled in
         The opponent's active pokemon in each of the battles has a different set"""
+
+        # if conf != None:
+        #     config = conf
         battle_copy = deepcopy(self)
         battle_copy.opponent.lock_moves()
 

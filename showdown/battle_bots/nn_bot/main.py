@@ -37,7 +37,7 @@ class BattleBot(Battle):
 
         moves = []
         switches = []
-        print('possible moves: {}'.format(my_options))
+       # print('possible moves: {}'.format(my_options))
         for option in my_options:
             if option.startswith(constants.SWITCH_STRING + " "):
                 switches.append(option)
@@ -75,7 +75,7 @@ class BattleBot(Battle):
 
             # pass input thorugh
             matrix = model(matrix.float())
-            print('logits layer: matrix', matrix)
+          #  print('logits layer: matrix', matrix)
             # TODO: account for my_options shrinking due to death
             ind = matrix[0:len(my_options)].argmax()
 

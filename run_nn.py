@@ -46,7 +46,7 @@ def parse_configs():
 
 def create_challenge_bot():
     conf = Config()
-    conf.battle_bot_module = "rand_bot"
+    conf.battle_bot_module = "safest"
     conf.save_replay = config.save_replay
     conf.use_relative_weights = config.use_relative_weights
     conf.gambit_exe_path = config.gambit_exe_path
@@ -110,7 +110,7 @@ async def showdown(challenge):
         conf = create_challenge_bot()
     else:
         conf = create_accept_bot()
-    force_global_config(conf)
+    #force_global_config(conf)
     config = conf
     init_logging("CRITICAL")
     apply_mods(config.pokemon_mode)
@@ -151,6 +151,8 @@ async def showdown(challenge):
             break
 
 async def main():
+    asyncio.gather(showdown(False), showdown(True))
+    asyncio.sleep(5)
     await asyncio.gather(showdown(False), showdown(True))
 
 if __name__ == "__main__":
