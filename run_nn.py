@@ -21,6 +21,10 @@ from data.mods.apply_mods import apply_mods
 from showdown.battle_bots.nn_bot.DQNAgent import Agent
 from showdown.battle_bots.nn_bot.deep_q_network import DeepQNetwork
 
+import torch
+from showdown.battle_bots.nn_bot.deep_q_network import DeepQNetwork
+from showdown.engine.evaluate import evaluate
+
 logger = logging.getLogger(__name__)
 
 def create_challenge_bot(agent):
@@ -29,7 +33,7 @@ def create_challenge_bot(agent):
     """
     conf = Config()
     if type(agent) == type(""):
-        conf.battle_bot_module = "rand_bot"
+        conf.battle_bot_module = "rand_max"
     else:
         conf.battle_bot_module = "nn_bot"
     conf.save_replay = config.save_replay
@@ -42,7 +46,7 @@ def create_challenge_bot(agent):
     conf.bot_mode = "CHALLENGE_USER"
     conf.team_name = "gen8/ou/band_toad"
     conf.pokemon_mode = "gen8ou"
-    conf.run_count = 1
+    conf.run_count = 5
     conf.user_to_challenge = "AcceptGary"
     conf.LOG_LEVEL = 'DEBUG'
     return conf
@@ -67,7 +71,7 @@ def create_accept_bot(agent):
     conf.team_name = "gen8/ou/band_toad"
     # conf.team_name = "gen8/ou/clef_sand"
     conf.pokemon_mode = "gen8ou"
-    conf.run_count = 1
+    conf.run_count = 5
     conf.LOG_LEVEL = 'DEBUG'
     return conf
 
@@ -115,6 +119,7 @@ async def showdown(accept, agent = None):
     battles_run = 0
     wins = 0
     losses = 0
+    total_score = 0
     while True:
         team = load_team(config.team_name)
         if config.bot_mode == constants.CHALLENGE_USER:
@@ -134,14 +139,26 @@ async def showdown(accept, agent = None):
             wins += 1
         else:
             losses += 1
+        
+        if accept:
+            logger.debug("W: {}\tL: {}".format(wins, losses))
+            score = agent.memory.memory.copy().pop()[2]
+            total_score += score
+            logger.debug("End Score: {}".format(score))
+        else:
+            logger.debug("W: {}\tL: {}".format(wins, losses))
 
-        logger.info("W: {}\tL: {}".format(wins, losses))
 
         check_dictionaries_are_unmodified(original_pokedex, original_move_json)
 
         battles_run += 1
         if battles_run >= config.run_count:
             break
+
+    if accept:
+        logger.critical("W: {}\tL: {}".format(wins, losses))
+        logger.critical("End Score: {}".format(total_score/(wins + losses)))
+    
 
 async def train_episode(agent1, agent2):
     """
@@ -154,23 +171,34 @@ async def main():
     init_logging("CRITICAL")
 
     """Training params"""
-    episodes = 11
+    episodes = 5
     state_size = 8175
     actions = 9
     merge_networks_time = 20  # run this many times and then merge multiple agents TODO
     seed = np.random.randint(0, 50)
-    agent1 = Agent(state_size, 9, seed)
+    agent1 = Agent(state_size, actions, seed)
+
+    # reinitialize and load weights
+    checkpoint = torch.load('nn_bot_trained')
+    model = DeepQNetwork(state_size, actions) 
+    model.load_state_dict(checkpoint['local'])
+    agent1.qnetwork_local = model
+    model.load_state_dict(checkpoint['target'])
+    agent1.qnetwork_target = model
 
     """main training loop"""
     for episode in range(episodes):
         print("episode", episode)
         agent2 = "rand_bot"
         await train_episode(agent1, agent2=agent2) # can probably run some of these in parallel using gather
-
+        # logger.critical("End Score: {}".format(agent1.memory.memory.copy().pop()[2]))
 
         if (episode+1) % merge_networks_time == 0:
             pass  # TODO
-
+    torch.save({
+        'local': agent1.qnetwork_local.state_dict(),
+        'target': agent1.qnetwork_target.state_dict()
+    }, "nn_bot_trained")
     print("done training")
 if __name__ == "__main__":
     asyncio.get_event_loop().run_until_complete(main())
