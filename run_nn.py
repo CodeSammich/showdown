@@ -97,7 +97,7 @@ def check_dictionaries_are_unmodified(original_pokedex, original_move_json):
 
 async def showdown(accept, agent = None):
     """
-    Will run through one battle
+    Will run through number of battles specified in config
 
     accept: boolean. If accept is true will create an accept_bot
     agent: specify str agent name (i.e rand_bot) or a DQNAgent. If DQNAgent will choose nn_bot
@@ -136,17 +136,23 @@ async def showdown(accept, agent = None):
             winner = await pokemon_battle(ps_websocket_client, config.pokemon_mode, config, agent)
 
         if winner == config.username:
+            finalReward = 1000
             wins += 1
         else:
+            finalReward = -1000
             losses += 1
         
         if accept:
             logger.debug("W: {}\tL: {}".format(wins, losses))
             score = agent.memory.memory.copy().pop()[2]
-            total_score += score
-            logger.debug("End Score: {}".format(score))
+            total_score += score + finalReward
+            logger.debug("End Score: {}".format(score)) #
+            agent.step(agent.previous_state, agent.previous_action, finalReward, torch.zeros(8175), True)
         else:
             logger.debug("W: {}\tL: {}".format(wins, losses))
+
+
+
 
 
         check_dictionaries_are_unmodified(original_pokedex, original_move_json)
@@ -200,6 +206,7 @@ async def main():
         'target': agent1.qnetwork_target.state_dict()
     }, "nn_bot_trained")
     print("done training")
+
 if __name__ == "__main__":
     asyncio.get_event_loop().run_until_complete(main())
     print("done")
