@@ -33,7 +33,7 @@ def create_challenge_bot(agent):
     """
     conf = Config()
     if type(agent) == type(""):
-        conf.battle_bot_module = "rand_max"
+        conf.battle_bot_module = "most_damage"
     else:
         conf.battle_bot_module = "nn_bot"
     conf.save_replay = config.save_replay
@@ -177,7 +177,7 @@ async def main():
     init_logging("CRITICAL")
 
     """Training params"""
-    episodes = 5
+    episodes = 10
     state_size = 8175
     actions = 9
     merge_networks_time = 20  # run this many times and then merge multiple agents TODO
