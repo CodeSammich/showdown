@@ -48,6 +48,7 @@ class BattleBot(Battle):
         for item in all_moves:
             mask.append(int(item in my_options))
 
+        # Get all moves and switches, not being used right now
         moves = []
         switches = []
        # print('possible moves: {}'.format(my_options))

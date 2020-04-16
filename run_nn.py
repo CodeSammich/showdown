@@ -45,9 +45,9 @@ def create_challenge_bot(agent):
     conf.username = "cbninjask5uber"
     conf.password = "aiaccount1"
     conf.bot_mode = "CHALLENGE_USER"
-    conf.team_name = "gen8/ou/band_toad"
+    conf.team_name = "gen8/ou/clef_sand"
     conf.pokemon_mode = "gen8ou"
-    conf.run_count = 5
+    conf.run_count = 2
     conf.user_to_challenge = "AcceptGary"
     conf.LOG_LEVEL = 'DEBUG'
     return conf
@@ -69,10 +69,10 @@ def create_accept_bot(agent):
     conf.username = "AcceptGary"
     conf.password = "password"
     conf.bot_mode = "ACCEPT_CHALLENGE"
-    conf.team_name = "gen8/ou/band_toad"
+    conf.team_name = "gen8/ou/simple"
     # conf.team_name = "gen8/ou/clef_sand"
     conf.pokemon_mode = "gen8ou"
-    conf.run_count = 5
+    conf.run_count = 2
     conf.LOG_LEVEL = 'DEBUG'
     return conf
 
@@ -209,10 +209,11 @@ async def main():
 
         if (episode+1) % merge_networks_time == 0:
             pass  # TODO
-    torch.save({
-        'local': agent1.qnetwork_local.state_dict(),
-        'target': agent1.qnetwork_target.state_dict()
-    }, "nn_bot_trained")
+    # Save Weights
+    # torch.save({
+    #     'local': agent1.qnetwork_local.state_dict(),
+    #     'target': agent1.qnetwork_target.state_dict()
+    # }, "nn_bot_trained")
     print("done training")
 
 if __name__ == "__main__":
