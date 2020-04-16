@@ -15,12 +15,13 @@ from teams import load_team
 from showdown.run_train import pokemon_battle
 from showdown.websocket_client import PSWebsocketClient
 
+from  async_timeout import timeout
 from data import all_move_json
 from data import pokedex
 from data.mods.apply_mods import apply_mods
 from showdown.battle_bots.nn_bot.DQNAgent import Agent
 from showdown.battle_bots.nn_bot.deep_q_network import DeepQNetwork
-
+import time
 import torch
 from showdown.battle_bots.nn_bot.deep_q_network import DeepQNetwork
 from showdown.engine.evaluate import evaluate
@@ -196,7 +197,14 @@ async def main():
     for episode in range(episodes):
         print("episode", episode)
         agent2 = "rand_bot"
-        await train_episode(agent1, agent2=agent2) # can probably run some of these in parallel using gather
+        try:
+            async with timeout(10800) as cm:
+                start = time.time()
+                await train_episode(agent1, agent2=agent2) # can probably run some of these in parallel using gather
+        except asyncio.TimeoutError as e:
+            print("Elapsed", time.time() - start)
+            print(e)
+            print("Agent Timed Out! This is a problem")
         # logger.critical("End Score: {}".format(agent1.memory.memory.copy().pop()[2]))
 
         if (episode+1) % merge_networks_time == 0:
