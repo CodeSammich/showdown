@@ -52,11 +52,16 @@ class Agent():
         # Initialize time step (for updating every UPDATE_EVERY steps)
         self.t_step = 0
 
+        # New parameter. Determines if agent is in train or eval mode
+        self._train = False
     def set_previous(self, state, action):
         self.previous_state = state
         self.previous_action = action
 
     def step(self, state, action, reward, next_step, done):
+        if not self._train:
+            print("Will not update network because it is in eval mode")
+
         # Save experience in replay memory
         self.memory.add(state, action, reward, next_step, done)
 
@@ -76,6 +81,9 @@ class Agent():
             state (array_like): current state
             eps (float): epsilon, for epsilon-greedy action selection
         """
+        if not self._train:
+            eps = 0
+
         state = state.float().unsqueeze(0).to(device)
         self.qnetwork_local.eval()
         with torch.no_grad():
@@ -131,6 +139,11 @@ class Agent():
             target_param.data.copy_(tau * local_param.data + (1 - tau) * target_param.data)
 
 
+    def train(self):
+        self._train = True
+
+    def eval(self):
+        self._train = False
 class ReplayBuffer:
     """Fixed -size buffer to store experience tuples."""
 
