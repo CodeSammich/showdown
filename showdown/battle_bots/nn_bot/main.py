@@ -80,9 +80,10 @@ class BattleBot(Battle):
             ##### TODO: wrap through Agent later on, this is just for testing
             # convert state to matrix via state_to_matrix
             matrix = self.state_to_vector()
+            reward = evaluate(state)
             # Calculate New Reward
             if agent.previous_state is not None:
-                agent.step(agent.previous_state, agent.previous_action, evaluate(state), matrix, False)
+                agent.step(agent.previous_state, agent.previous_action, (reward - agent.previous_reward)/10, matrix, False)
 
             # reinitialize and load weights
             # model = DeepQNetwork() 
@@ -96,7 +97,7 @@ class BattleBot(Battle):
             # gets index from all moves
             ind = agent.act(matrix, mask)
             # TODO: account for my_options shrinking due to death
-            agent.set_previous(matrix, ind)
+            agent.set_previous(matrix, ind, reward)
 
             # get logits layer and take the best moves (highest value after softmax)
             choice = all_moves[ind]
