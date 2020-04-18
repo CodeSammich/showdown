@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 # Constants
 ENEMY_BOT = "rand_max"
 ENEMY_TEAM = "random"
-POSSIBLE_TEAMS = ["clef_sand", "band_toad", "balance", "simple"]
+POSSIBLE_TEAMS = ["clef_sand", "band_toad", "balance", "simple", "weavile_stall", "mew_stall"]
 LOG_MODE = "CRITICAL"
 LOAD = False
 SAVE = True
