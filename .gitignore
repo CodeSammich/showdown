@@ -11,4 +11,4 @@ suspect_decisions.py
 .mypy_cache/
 tags
 .DS_Store
-nn_bot_trained_old
+nn_bot_trained_old*

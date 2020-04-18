@@ -62,7 +62,8 @@ class Agent():
 
     def step(self, state, action, reward, next_step, done):
         if not self._train:
-            print("Will not update network because it is in eval mode")
+            pass
+            # print("Will not update network because it is in eval mode")
 
         # Save experience in replay memory
         self.memory.add(state, action, reward, next_step, done)

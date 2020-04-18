@@ -71,9 +71,12 @@ class Battle(ABC):
 
         self.request_json = None
 
+        self.all_pokemon = None
+
     def initialize_team_preview(self, user_json, opponent_pokemon, battle_mode):
         self.user.from_json(user_json, first_turn=True)
         self.user.reserve.insert(0, self.user.active)
+        self.all_pokemon = self.user.reserve.copy()
         self.user.active = None
 
         for pkmn_string in opponent_pokemon:
@@ -435,7 +438,7 @@ class Pokemon:
         self.can_have_choice_item = True
         self.can_have_life_orb = True
 
-    def to_vector(self):
+    def to_vector(self, ally = True):
         '''
         Convert Pokemon's individual stats to a single vector 
         1181 total categories we care about, mostly one-hot pokemon names
@@ -445,25 +448,29 @@ class Pokemon:
         '''
         # TODO: pls comment
         vector = []
-        # Index pokemon as number as a one-hot bector
+        # Index pokemon as number as a one-hot vector
         pokemon_index = list(pokedex.keys()).index(self.name)
-        one_hot_pokemon = [int(w == pokemon_index) for w in list(pokedex.keys())]
-        vector.append(torch.IntTensor(one_hot_pokemon))
+        # one_hot_pokemon = [int(w == pokemon_index) for w in list(pokedex.keys())]
+        # vector.append(torch.IntTensor(one_hot_pokemon))
+        if not ally:
         # Add Base stats
-        base_stats = torch.IntTensor(list(self.base_stats.values()))
-        vector.append(base_stats)
+            base_stats = torch.IntTensor(list(self.base_stats.values()))
+            vector.append(base_stats)
+            # Add types
+            type_indices = [pokemon_type_indicies[x] for x in self.types]
+            # If only 1 type, add a second type
+            if len(type_indices) == 1:
+                type_indices = [type_indices[0], 18]
+            one_hot_types = [int(w == pokemon_index) for w in type_indices]
+            vector.append(torch.IntTensor(one_hot_types))
+            # Add possible items 
+            vector.append(torch.IntTensor([self.can_have_choice_item]))
+            vector.append(torch.IntTensor([self.can_have_life_orb]))
         # Add Percent hp
         if self.hp == 0 or self.max_hp == 0:
             vector.append(torch.IntTensor([0]))
         else:
             vector.append(torch.IntTensor([self.hp*100/self.max_hp]))
-        # Add types
-        type_indices = [pokemon_type_indicies[x] for x in self.types]
-        # If only 1 type, add a second type
-        if len(type_indices) == 1:
-            type_indices = [type_indices[0], 18]
-        one_hot_types = [int(w == pokemon_index) for w in type_indices]
-        vector.append(torch.IntTensor(one_hot_types))
         # Add if pokemon is fainted
         vector.append(torch.IntTensor([self.fainted]))
         # Add Status
@@ -475,9 +482,6 @@ class Pokemon:
         vector.append(torch.IntTensor(one_hot_vola))
         # Add boosts
         vector.append(torch.IntTensor(list(dict(self.boosts).values())))
-        # Add possible items 
-        vector.append(torch.IntTensor([self.can_have_choice_item]))
-        vector.append(torch.IntTensor([self.can_have_life_orb]))
         return torch.cat(vector, dim=0)
 
     def forme_change(self, new_pkmn_name):

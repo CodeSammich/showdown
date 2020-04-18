@@ -30,13 +30,37 @@ from showdown.engine.evaluate import evaluate
 
 logger = logging.getLogger(__name__)
 
+# Constants
+ENEMY_BOT = "rand_max"
+ENEMY_TEAM = "random"
+POSSIBLE_TEAMS = ["clef_sand", "band_toad", "balance", "simple"]
+LOG_MODE = "CRITICAL"
+LOAD = False
+SAVE = True
+"""Training params"""
+episodes = 10
+merge_networks_time = 10000  # run this many times and then merge multiple agents TODO
+
+"""Performance Params"""
+eval_time = 10000 # evals the network every eval_time steps
+eval_run_battles = 3  # runs this many battles to determine performance against
+eval_opponent = "safest"  # what is the neural network evaluating against
+winPercList = []
+episodeList = []
+
+seed = np.random.randint(0, 50)
+
+"""Network Params"""
+state_size = 327
+actions = 10
+
 def create_challenge_bot(agent):
     """
     agent: specify str agent name (i.e rand_bot) or a DQNAgent. If DQNAgent will choose nn_bot
     """
     conf = Config()
     if type(agent) == type(""):
-        conf.battle_bot_module = "most_damage"
+        conf.battle_bot_module = ENEMY_BOT
     else:
         conf.battle_bot_module = "nn_bot"
     conf.save_replay = config.save_replay
@@ -47,9 +71,9 @@ def create_challenge_bot(agent):
     conf.username = "cbninjask5uber"
     conf.password = "aiaccount1"
     conf.bot_mode = "CHALLENGE_USER"
-    conf.team_name = "gen8/ou/clef_sand"
+    conf.team_name = ENEMY_TEAM
     conf.pokemon_mode = "gen8ou"
-    conf.run_count = 2
+    conf.run_count = 1
     conf.user_to_challenge = "AcceptGary"
     conf.LOG_LEVEL = 'DEBUG'
     return conf
@@ -72,9 +96,8 @@ def create_accept_bot(agent):
     conf.password = "password"
     conf.bot_mode = "ACCEPT_CHALLENGE"
     conf.team_name = "gen8/ou/simple"
-    # conf.team_name = "gen8/ou/clef_sand"
     conf.pokemon_mode = "gen8ou"
-    conf.run_count = 2
+    conf.run_count = 1
     conf.LOG_LEVEL = 'DEBUG'
     return conf
 
@@ -107,9 +130,8 @@ async def showdown(accept, agent=None):
     """
     if accept:
         conf = create_accept_bot(agent)  # accept gary
-        #await asyncio.sleep(10)  # ensure that challenge bot has time to be created first
     else:
-        # await asyncio.sleep(5)  # ensure that challenge bot has time to be created first
+        await asyncio.sleep(1)  # ensure that challenge bot has time to be created first
         conf = create_challenge_bot(agent)  # cbninjask5uber
 
     config = conf
@@ -124,7 +146,12 @@ async def showdown(accept, agent=None):
     wins = 0
     losses = 0
 
-    team = load_team(config.team_name)
+    if config.team_name != "random":
+        team_name = config.team_name
+    else:
+        team_name = "gen8/ou/" + np.random.choice(POSSIBLE_TEAMS)
+        print(team_name)
+    team = load_team(team_name)
     if config.bot_mode == constants.CHALLENGE_USER:
         await ps_websocket_client.challenge_user(config.user_to_challenge, config.pokemon_mode, team)
     elif config.bot_mode == constants.ACCEPT_CHALLENGE:
@@ -148,9 +175,10 @@ async def showdown(accept, agent=None):
 
     if type(agent) != type("str"):
         logger.critical("W: {}\tL: {}".format(wins, losses))
-        # score = agent.memory.memory.copy().pop()[2]
-        logger.critical("End Score: {}".format(agent.previous_reward + finalReward)) #
-        agent.step(agent.previous_state, agent.previous_action, finalReward, torch.zeros(8175), True)
+        reward = agent.previous_reward + finalReward/10
+        logger.critical("End Score: {}".format(reward))
+        # winPercList.append(reward)
+        agent.step(agent.previous_state, agent.previous_action, finalReward, agent.previous_state, True)
     else:
         logger.debug("W: {}\tL: {}".format(wins, losses))
 
@@ -174,35 +202,20 @@ async def train_episode(agent1, agent2):
 
 async def main():
     """Call this code only once"""
-    init_logging("CRITICAL")
+    init_logging(LOG_MODE)
 
-    """Training params"""
-    episodes = 100
-    merge_networks_time = 20  # run this many times and then merge multiple agents TODO
-
-    """Performance Params"""
-    eval_time = 30 # evals the network every eval_time steps
-    eval_run_battles = 3  # runs this many battles to determine performance against
-    eval_opponent = "rand_bot"  # what is the neural network evaluating against
-    winPercList = []
-    episodeList = []
-
-    seed = np.random.randint(0, 50)
-
-    """Network Params"""
-    state_size = 8175
-    actions = 9
     agent1 = Agent(state_size, actions, seed)
     agent1.train()  # agent is in training mode
     agent2 = "rand_bot" # two agents should actually be playing against eachother
 
     # reinitialize and load weights
-    checkpoint = torch.load('nn_bot_trained')
-    model = DeepQNetwork(state_size, actions) 
-    model.load_state_dict(checkpoint['local'])
-    agent1.qnetwork_local = model
-    model.load_state_dict(checkpoint['target'])
-    agent1.qnetwork_target = model
+    if LOAD:
+        checkpoint = torch.load('nn_bot_trained')
+        model = DeepQNetwork(state_size, actions)
+        model.load_state_dict(checkpoint['local'])
+        agent1.qnetwork_local = model
+        model.load_state_dict(checkpoint['target'])
+        agent1.qnetwork_target = model
 
 
 
@@ -225,17 +238,18 @@ async def main():
                 agentWin, _ = await train_episode(agent1, agent2=eval_opponent)  # can probably run some of these in parallel using gather
                 wins += agentWin
             episodeList.append(episode)
-            winPercList.append(wins/eval_run_battles)
+            # winPercList.append(wins/eval_run_battles)
+            winPercList.append(agent1.previous_reward + wins*100)
             agent1.train()  # allows the agent to train again
 
-            # torch.save({
-            #     'local': agent1.qnetwork_local.state_dict(),
-            #     'target': agent1.qnetwork_target.state_dict()
-            # }, 'nn_bot_trained')
-
-        # plt.clf()
-        # plt.plot(episodeList,winPercList)
-        # plt.draw()
+            # plt.clf()
+            # plt.plot(episodeList,winPercList)
+            # plt.draw()
+    if SAVE:
+        torch.save({
+            'local': agent1.qnetwork_local.state_dict(),
+            'target': agent1.qnetwork_target.state_dict()
+        }, 'nn_bot_trained')
     print("done training")
 
 if __name__ == "__main__":
