@@ -85,7 +85,7 @@ class BattleBot(Battle):
             # breakpoint()
             # Calculate New Reward
             if agent.previous_state is not None:
-                agent.step(agent.previous_state, agent.previous_action, (reward - agent.previous_reward)/10, matrix, False)
+                agent.step(agent.previous_state, agent.previous_action, (reward - agent.previous_reward)/1000, matrix, False)
 
             # reinitialize and load weights
             # model = DeepQNetwork() 
@@ -151,8 +151,13 @@ class BattleBot(Battle):
         state_matrix.append(opp_side_cond_vec)
         
         # convert opponent's active to one vector
-        opp_act_vec = self.opponent.active.to_vector()
+        opp_act_vec = self.opponent.active.to_vector(False)
         state_matrix.append(opp_act_vec)
+
+        # convert each of opponent's reserves to vectors
+        reserve = self.opponent.reserve
+        for pokemon in reserve:
+            state_matrix.append(pokemon.to_vector(False))
  
         ######## USER #########
         # convert user's wish to one vector
@@ -179,15 +184,6 @@ class BattleBot(Battle):
         reserve = self.user.reserve
         for pokemon in reserve:
             state_matrix.append(pokemon.to_vector())
-
-        # convert opponent's active to one vector
-        state_matrix.append(self.opponent.active.to_vector(False))
-
-        # convert each of opponent's reserves to vectors
-        reserve = self.opponent.reserve
-        for pokemon in reserve:
-            state_matrix.append(pokemon.to_vector(False))
-        
 
         # flatten final self matrix into one vector
         return torch.cat(state_matrix, dim=0)

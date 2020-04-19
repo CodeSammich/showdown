@@ -10,10 +10,10 @@ class DeepQNetwork(nn.Module):
         self.seed = torch.manual_seed(seed)
 
         # start by copying http://cs230.stanford.edu/projects_fall_2018/reports/12447633.pdf network
-        self.fc1 = nn.Linear(state_size, 512)
-        self.fc2 = nn.Linear(512, 512)
-        self.fc3 = nn.Linear(512, 512)
-        self.logits = nn.Linear(512, action_size)
+        self.fc1 = nn.Linear(state_size, 128)
+        self.dropout = nn.Dropout(p=.3)
+        self.fc2 = nn.Linear(128, 64)
+        self.logits = nn.Linear(64, action_size)
         self.softmax = nn.Softmax()
 
     def forward(self, state):
@@ -22,9 +22,8 @@ class DeepQNetwork(nn.Module):
         # drawback: it forgets previously released opponent's pokemon
         state = self.fc1(state)
         state = F.relu(state)
+        state = self.dropout(state)
         state = self.fc2(state)
-        state = F.relu(state)
-        state = self.fc3(state)
         state = F.relu(state)
         state = self.logits(state)
         state = F.softmax(state)

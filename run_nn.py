@@ -25,7 +25,6 @@ from showdown.battle_bots.nn_bot.DQNAgent import Agent
 from showdown.battle_bots.nn_bot.deep_q_network import DeepQNetwork
 import time
 import torch
-from showdown.battle_bots.nn_bot.deep_q_network import DeepQNetwork
 from showdown.engine.evaluate import evaluate
 
 logger = logging.getLogger(__name__)
@@ -38,7 +37,7 @@ LOG_MODE = "CRITICAL"
 LOAD = False
 SAVE = True
 """Training params"""
-episodes = 10
+episodes = 20
 merge_networks_time = 10000  # run this many times and then merge multiple agents TODO
 
 """Performance Params"""
@@ -51,7 +50,7 @@ episodeList = []
 seed = np.random.randint(0, 50)
 
 """Network Params"""
-state_size = 327
+state_size = 405
 actions = 10
 
 def create_challenge_bot(agent):
@@ -167,10 +166,10 @@ async def showdown(accept, agent=None):
         winner = await pokemon_battle(ps_websocket_client, config.pokemon_mode, config, agent)
 
     if winner == config.username:
-        finalReward = 1000
+        finalReward = 1
         wins += 1
     else:
-        finalReward = -1000
+        finalReward = -1
         losses += 1
 
     if type(agent) != type("str"):

@@ -458,10 +458,10 @@ class Pokemon:
             vector.append(base_stats)
             # Add types
             type_indices = [pokemon_type_indicies[x] for x in self.types]
-            # If only 1 type, add a second type
-            if len(type_indices) == 1:
-                type_indices = [type_indices[0], 18]
-            one_hot_types = [int(w == pokemon_index) for w in type_indices]
+            # # If only 1 type, add a second type
+            # if len(type_indices) == 1:
+            #     type_indices = [type_indices[0], 18]
+            one_hot_types = [int(w in type_indices) for w in range(18)]
             vector.append(torch.IntTensor(one_hot_types))
             # Add possible items 
             vector.append(torch.IntTensor([self.can_have_choice_item]))
