@@ -43,7 +43,6 @@ class Agent():
         self.previous_state = None
         self.previous_action = None
         self.previous_reward = 0
-        self.all_actions = [] # all possible actions for agent to reference index consistently
 
         # Q- Network
         self.qnetwork_local = QNetwork(state_size, action_size, seed).to(device)
@@ -100,7 +99,7 @@ class Agent():
             logits = self.qnetwork_local(state)
         self.qnetwork_local.train()
 
-        def pick_move_based_on_logits(logits, my_options, all_switches):
+        def pick_move_based_on_logits(logits, my_options, all_switches, pick_random=False):
             '''
             How we choose the mask is dependant on the new 
             moves categories (whatever flags are ticked and correspond w/ moveset
@@ -153,26 +152,30 @@ class Agent():
 
             logits = logits.cpu().data.numpy()[0] # convert to numpy for argmax
             while True: # run until move is found
-                index = np.argmax(logits) # index of chosen move
+                if pick_random:
+                    index = np.random.randint(len(logits)) # index of random move 
+                else:
+                    index = np.argmax(logits) # index of NN chosen move
                 logits[index] = 0 # remove that choice b/c we repeat if what NN is asking for is invalid
 
                 if index < 6: # switch to selected pokemon
                     switch = all_switches[index]
                     if switch in my_options:
-                        return switch
+                        return index, switch
                 else:
                     for move in my_options: # check all moves for status and type
                         if move in moves_lib: # if valid pokemon attack, return if it's what NN is asking for
                             if index == 6: # NN wants a status move
                                 if moves_lib[move]['category'] == 'status':
-                                    return move
+                                    return index, move
                             elif types[index] == moves_lib[move]['type']: # NN wants a type move
-                                return move
+                                return index, move
 
         if random.random() > eps: # epsilon-greedy selection
             return pick_move_based_on_logits(logits, my_options, all_switches)
         else:
-            return random.choice(my_options)
+            # pick a random index and return both it and the element
+            return pick_move_based_on_logits(logits, my_options, all_switches, pick_random=True)
 
     def learn(self, experiences, gamma):
         """Update value parameters using given batch of experience tuples.

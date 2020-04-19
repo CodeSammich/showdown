@@ -58,12 +58,8 @@ class BattleBot(Battle):
             agent.step(agent.previous_state, agent.previous_action, (reward - agent.previous_reward)/1000, matrix, False)
 
         # pass through network and return choice
-        choice = agent.act(matrix, my_options, all_switches)
-
-        # set a unique index for action if it hasn't been used before, then keep it in memory as a previous experience
-        if choice not in agent.all_actions:
-            agent.all_actions.append(choice)
-        agent.set_previous(matrix, agent.all_actions.index(choice), reward)
+        idx, choice = agent.act(matrix, my_options, all_switches)
+        agent.set_previous(matrix, idx, reward)
 
         return format_decision(self, choice)
 
