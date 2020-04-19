@@ -27,6 +27,7 @@ class BattleBot(Battle):
                            constants.MISTY_TERRAIN,
                            constants.PSYCHIC_TERRAIN]
         self.side_conds = list(constants.COURT_CHANGE_SWAPS) # init for stable
+        self.all_actions = []
 
     def find_best_move(self, agent=None): # calls best_move to start even when it does not go first?
         state = self.create_state()
@@ -61,10 +62,10 @@ class BattleBot(Battle):
         # pass through network and return choice
         choice = agent.act(matrix, my_options, all_switches)
 
-        # index of choice can change based on what my_options is
-        # TODO: maybe this is not a consistent way of keeping track of "previous action"
-        idx = my_options.index(choice)
-        agent.set_previous(matrix, idx, reward)
+        # set a unique index for action if it hasn't been used before, then keep it in memory as a previous experience
+        if choice not in self.all_actions:
+            self.all_actions.append(choice)
+        agent.set_previous(matrix, self.all_actions.index(choice), reward)
 
         return format_decision(self, choice)
 

@@ -167,9 +167,10 @@ class Agent():
                 else:
                     for move in my_options: # check all moves for status and type
                         if move in moves_lib: # if valid pokemon attack, return if it's what NN is asking for
-                            if index == 6 and moves_lib[move]['category'] == 'status':
-                                return move
-                            if types[index] == moves_lib[move]['type']:
+                            if index == 6: # NN wants a status move
+                                if moves_lib[move]['category'] == 'status':
+                                    return move
+                            elif types[index] == moves_lib[move]['type']: # NN wants a type move
                                 return move
 
         if random.random() > eps: # epsilon-greedy selection
