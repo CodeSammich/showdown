@@ -42,7 +42,7 @@ class BattleBot(Battle):
             all_moves.append(all_moves[0])
             all_moves.append(all_moves[0])
             all_moves.append(all_moves[0])
-        for pkmn in self.user.reserve:
+        for pkmn in self.all_pokemon:
             all_moves.append("{} {}".format(constants.SWITCH_STRING, pkmn.name))
 
         # TODO: mask is still the moves available
@@ -56,6 +56,7 @@ class BattleBot(Battle):
         mask = []
         for item in all_moves:
             mask.append(int(item in my_options))
+
 
         # Get all moves and switches, not being used right now
         moves = []
@@ -90,6 +91,7 @@ class BattleBot(Battle):
             # convert state to matrix via state_to_matrix
             matrix = self.state_to_vector()
             reward = evaluate(state)
+            # breakpoint()
             # Calculate New Reward
             if agent.previous_state is not None:
                 agent.step(agent.previous_state, agent.previous_action, (reward - agent.previous_reward)/10, matrix, False)
@@ -175,13 +177,26 @@ class BattleBot(Battle):
         user_side_cond_vec = torch.IntTensor(user_side_cond)
         state_matrix.append(user_side_cond_vec)
 
+        # Encode who is currently Active as 1-hot
+        one_hot_pokemon = torch.IntTensor([int(self.user.active == poke) for poke in self.all_pokemon])
+        state_matrix.append(one_hot_pokemon)
+
         # convert user's active to one vector
         state_matrix.append(self.user.active.to_vector())
 
         # convert each of user's reserves to vectors
-        user_reserve = self.user.reserve
-        for pokemon in user_reserve:
+        reserve = self.user.reserve
+        for pokemon in reserve:
             state_matrix.append(pokemon.to_vector())
+
+        # convert opponent's active to one vector
+        state_matrix.append(self.opponent.active.to_vector(False))
+
+        # convert each of opponent's reserves to vectors
+        reserve = self.opponent.reserve
+        for pokemon in reserve:
+            state_matrix.append(pokemon.to_vector(False))
+        
 
         # flatten final self matrix into one vector
         return torch.cat(state_matrix, dim=0)

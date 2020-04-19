@@ -2,7 +2,6 @@ Dracovish @ Choice Scarf
 Ability: Strong Jaw  
 EVs: 4 HP / 252 Atk / 252 Spe  
 Adamant Nature  
-IVs: 0 Atk  
 - Fishious Rend  
 - Crunch  
 - Psychic Fangs  
@@ -14,7 +13,7 @@ EVs: 252 Atk / 4 Def / 252 Spe
 Jolly Nature  
 - Earthquake  
 - Rapid Spin  
-- Iron Head
+- Iron Head  
 - Stealth Rock  
 
 Zeraora @ Life Orb  
@@ -36,14 +35,15 @@ IVs: 0 Atk
 - Boomburst  
 - Clangorous Soul  
 
-Conkeldurr @ Flame Orb  
-Ability: Guts  
-EVs: 252 Atk / 4 SpD / 252 Spe  
-Adamant Nature  
-- Drain Punch  
-- Mach Punch  
-- Knock Off  
-- Facade  
+Ninetales-Alola @ Light Clay  
+Ability: Snow Warning  
+EVs: 248 HP / 8 SpA / 252 Spe  
+Timid Nature  
+IVs: 0 Atk  
+- Blizzard  
+- Freeze-Dry  
+- Moonblast  
+- Aurora Veil  
 
 Inteleon @ Choice Specs  
 Ability: Torrent  
