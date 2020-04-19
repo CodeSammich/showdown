@@ -5,7 +5,7 @@ from collections import namedtuple, deque
 ##Importing the model (function approximator for Q-table)
 from showdown.battle_bots.nn_bot.deep_q_network import DeepQNetwork as QNetwork
 
-from json import load
+from data import all_moves_json as moves_lib
 
 import torch
 import torch.nn.functional as F
@@ -149,12 +149,6 @@ class Agent():
                 22: 'dark',
                 23: 'steel',
                 24: 'fairy'}
-
-            import os # makes a relative path to moves.json
-            cur_path = os.path.dirname(__file__)
-            moves_path = os.path.join(cur_path, '../../../data/moves.json')
-            with open(moves_path, 'r') as f: # loads moves library
-                moves_lib = load(f)
 
             logits = logits.cpu().data.numpy()[0] # convert to numpy for argmax
             while True: # run until move is found
