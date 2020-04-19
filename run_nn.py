@@ -37,14 +37,16 @@ LOG_MODE = "CRITICAL"
 LOAD = False
 SAVE = True
 """Training params"""
+num_games = 3
 episodes = 20
 merge_networks_time = 10000  # run this many times and then merge multiple agents TODO
 
 """Performance Params"""
-eval_time = 10000 # evals the network every eval_time steps
-eval_run_battles = 3  # runs this many battles to determine performance against
+eval_time = 5 # evals the network every eval_time steps
+eval_run_battles = 1  # runs this many battles to determine performance against
 eval_opponent = "safest"  # what is the neural network evaluating against
-winPercList = []
+randRewardList = []
+damageRewardList = []
 episodeList = []
 
 seed = np.random.randint(0, 50)
@@ -53,12 +55,12 @@ seed = np.random.randint(0, 50)
 state_size = 405
 actions = 25 
 
-def create_challenge_bot(one=True):
+def create_challenge_bot(one = True, bot = ENEMY_BOT):
     """
     agent: specify str agent name (i.e rand_bot) or a DQNAgent. If DQNAgent will choose nn_bot
     """
     conf = Config()
-    conf.battle_bot_module = ENEMY_BOT
+    conf.battle_bot_module = bot
     conf.save_replay = config.save_replay
     conf.use_relative_weights = config.use_relative_weights
     conf.gambit_exe_path = config.gambit_exe_path
@@ -137,7 +139,12 @@ async def showdown(accept, agent=None):
         # conf = create_accept_bot(agent)  # accept gary
     else:
         await asyncio.sleep(1)  # ensure that challenge bot has time to be created first
-        conf = create_challenge_bot(agent)  # cbninjask5uber
+        if agent == "True" or agent == "rand_bot":
+            if agent == "True": agent = ENEMY_BOT
+            conf = create_challenge_bot(True, agent)  # cbninjask5uber
+        else:
+            if agent == "False": agent = ENEMY_BOT
+            conf = create_challenge_bot(False, agent)  # cbninjask5uber
 
     config = conf
     apply_mods(config.pokemon_mode)
@@ -150,45 +157,51 @@ async def showdown(accept, agent=None):
 
     wins = 0
     losses = 0
+    reward = 0
 
-    if config.team_name != "random":
-        team_name = config.team_name
-    else:
-        team_name = "gen8/ou/" + np.random.choice(POSSIBLE_TEAMS)
-        print(team_name)
-    team = load_team(team_name)
-    if config.bot_mode == constants.CHALLENGE_USER:
-        await ps_websocket_client.challenge_user(config.user_to_challenge, config.pokemon_mode, team)
-    elif config.bot_mode == constants.ACCEPT_CHALLENGE:
-        await ps_websocket_client.accept_challenge(config.pokemon_mode, team)
-    elif config.bot_mode == constants.SEARCH_LADDER:
-        await ps_websocket_client.search_for_match(config.pokemon_mode, team)
-    else:
-        raise ValueError("Invalid Bot Mode")
+    for _ in range(num_games):
+        if config.team_name != "random":
+            team_name = config.team_name
+        else:
+            team_name = "gen8/ou/" + np.random.choice(POSSIBLE_TEAMS)
+            # print(team_name)
+        team = load_team(team_name)
+        if config.bot_mode == constants.CHALLENGE_USER:
+            await ps_websocket_client.challenge_user(config.user_to_challenge, config.pokemon_mode, team)
+        elif config.bot_mode == constants.ACCEPT_CHALLENGE:
+            await ps_websocket_client.accept_challenge(config.pokemon_mode, team)
+        elif config.bot_mode == constants.SEARCH_LADDER:
+            await ps_websocket_client.search_for_match(config.pokemon_mode, team)
+        else:
+            raise ValueError("Invalid Bot Mode")
 
-    if type(agent) == bool:
-        winner = await pokemon_battle(ps_websocket_client, config.pokemon_mode, config, agent = None)
-    else:
-        winner = await pokemon_battle(ps_websocket_client, config.pokemon_mode, config, agent)
+        if type(agent) == str:
+            winner = await pokemon_battle(ps_websocket_client, config.pokemon_mode, config, agent = None)
+        else:
+            winner = await pokemon_battle(ps_websocket_client, config.pokemon_mode, config, agent)
 
-    if winner == config.username:
-        finalReward = 1
-        wins += 1
-    else:
-        finalReward = -1
-        losses += 1
+        if winner == config.username:
+            finalReward = 1
+            wins += 1
+        else:
+            finalReward = -1
+            losses += 1
 
-    if type(agent) != bool:
+        if type(agent) != str:
+            # logger.critical("W: {}\tL: {}".format(wins, losses))
+            reward += agent.previous_reward + finalReward*100
+            # logger.critical("End Score: {}".format(reward))
+            # winPercList.append(reward)
+            agent.step(agent.previous_state, agent.previous_action, finalReward, agent.previous_state, True)
+        else:
+            logger.debug("W: {}\tL: {}".format(wins, losses))
+
+    if type(agent) != str:
+        reward = reward/num_games
         logger.critical("W: {}\tL: {}".format(wins, losses))
-        reward = agent.previous_reward + finalReward/10
         logger.critical("End Score: {}".format(reward))
-        # winPercList.append(reward)
-        agent.step(agent.previous_state, agent.previous_action, finalReward, agent.previous_state, True)
-    else:
-        logger.debug("W: {}\tL: {}".format(wins, losses))
-
     check_dictionaries_are_unmodified(original_pokedex, original_move_json)
-    return winner == config.username
+    return reward #winner == config.username
 
     # battles_run += 1
     # if battles_run >= config.run_count:
@@ -217,8 +230,6 @@ async def main():
     agent2 = Agent(state_size, actions, seed, create_accept_bot(one = False))
     agent1.train()  # agent is in training mode
     agent2.train()
-    agent1.qnetwork_local = agent2.qnetwork_local
-    agent1.qnetwork_target = agent2.qnetwork_target
     # agent2 = "rand_bot" # two agents should actually be playing against eachother
 
     # reinitialize and load weights
@@ -230,14 +241,20 @@ async def main():
         model.load_state_dict(checkpoint['target'])
         agent1.qnetwork_target = model
 
-
-
+    # Set networks to be equal
+    agent1.qnetwork_local = agent2.qnetwork_local
+    agent1.qnetwork_target = agent2.qnetwork_target
     """main training loop"""
     for episode in range(episodes):
+        breakpoint()
         print("episode", episode)
         # await asyncio.sleep(30)
         start = time.time()
-        await train_episode(agent1, agent2 = True, agent3 = agent2, agent4 = False)  # can probably run some of these in parallel using gather
+        try: # can probably run some of these in parallel using gather
+            # await asyncio.wait_for(eternity(), timeout=1.0)
+            await asyncio.wait_for(train_episode(agent1, "True", agent2, "False"), timeout=180)
+        except asyncio.TimeoutError:
+            print('timeout!')
         print("Elapsed", time.time() - start)
 
         if (episode+1) % merge_networks_time == 0:
@@ -245,24 +262,25 @@ async def main():
 
         if (episode + 1) % eval_time == 0:
             agent1.eval()
-            wins = 0
             for i in range(eval_run_battles):
                 print("Eval Number", i)
-                agentWin, _ = await train_episode(agent1, agent2=eval_opponent)  # can probably run some of these in parallel using gather
-                wins += agentWin
-            episodeList.append(episode)
-            # winPercList.append(wins/eval_run_battles)
-            winPercList.append(agent1.previous_reward + wins*100)
+                randReward, _, damageReward, _ = await train_episode(agent1, "rand_bot", agent2, "most_damage")
+                episodeList.append(episode)
+                randRewardList.append(randReward)
+                damageRewardList.append(damageReward)
             agent1.train()  # allows the agent to train again
-
-            # plt.clf()
-            # plt.plot(episodeList,winPercList)
-            # plt.draw()
     if SAVE:
         torch.save({
             'local': agent1.qnetwork_local.state_dict(),
             'target': agent1.qnetwork_target.state_dict()
         }, 'nn_bot_trained')
+    # Plot Graphs
+    plt.clf()
+    plt.plot(episodeList, randRewardList, label="Random bot Graph")
+    plt.plot(episodeList, damageRewardList, label="Damage bot Graph")
+    plt.legend()
+    plt.draw()
+    plt.show()
     print("done training")
 
 if __name__ == "__main__":
