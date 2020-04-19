@@ -29,30 +29,18 @@ class BattleBot(Battle):
         self.side_conds = list(constants.COURT_CHANGE_SWAPS) # init for stable
 
     def find_best_move(self, agent=None): # calls best_move to start even when it does not go first?
-        # network = DeepQNetwork()
-        # criterion = nn.MSELoss()
-        # optimizer = optim.Adam(network.parameters())
         state = self.create_state()
-        my_options = self.get_all_options()[0]
-        # Get all options (even impossible)
-        all_moves = []
-        for move in self.user.active.moves:
-            all_moves.append(str(move))
-        if(len(all_moves) == 1):
-            all_moves.append(all_moves[0])
-            all_moves.append(all_moves[0])
-            all_moves.append(all_moves[0])
-        for pkmn in self.all_pokemon:
-            all_moves.append("{} {}".format(constants.SWITCH_STRING, pkmn.name))
-        mask = []
-        for item in all_moves:
-            mask.append(int(item in my_options))
+        my_options = self.get_all_options()[0] # all valid actions, already accounts for struggle and switches
 
+        # all switch options, even if fainted or self
+        all_switches = []
+        for pkmn in self.all_pokemon:
+            all_switches.append("{} {}".format(constants.SWITCH_STRING, pkmn.name))
 
         # Get all moves and switches, not being used right now
+        # e.g. volt switch
         moves = []
         switches = []
-       # print('possible moves: {}'.format(my_options))
         for option in my_options:
             if option.startswith(constants.SWITCH_STRING + " "):
                 switches.append(option)
@@ -62,47 +50,20 @@ class BattleBot(Battle):
         if self.force_switch or not moves:
             return format_decision(self, switches[0])
 
-        # THIS WHOLE SECTION SHOULD BE REPLACED BY "find_move" in Agent class
-        # pick moves logic for non-nn based on simple most damage formula
-        if agent == None:
-            most_damage = -1
-            choice = None
-            for move in moves:
-                # pick best move 
-                # most damage per move
-                damage_amounts = calculate_damage(state, constants.SELF, move, constants.DO_NOTHING_MOVE)
+        # convert state to matrix
+        matrix = self.state_to_vector()
+        reward = evaluate(state)
+        # Calculate New Reward
+        if agent.previous_state is not None:
+            agent.step(agent.previous_state, agent.previous_action, (reward - agent.previous_reward)/1000, matrix, False)
 
-                damage = damage_amounts[0] if damage_amounts else 0
+        # pass through network and return choice
+        choice = agent.act(matrix, my_options, all_switches)
 
-                if damage > most_damage:
-                    choice = move
-                    most_damage = damage
-        else:
-            ##### TODO: wrap through Agent later on, this is just for testing
-            # convert state to matrix via state_to_matrix
-            matrix = self.state_to_vector()
-            reward = evaluate(state)
-            # breakpoint()
-            # Calculate New Reward
-            if agent.previous_state is not None:
-                agent.step(agent.previous_state, agent.previous_action, (reward - agent.previous_reward)/1000, matrix, False)
-
-            # reinitialize and load weights
-            # model = DeepQNetwork() 
-            # model.load_state_dict(torch.load('nn_bot_trained'))
-
-
-            # expected utility Q(s,a) = R_{t+1} + gamma*max_a{[Q(s,a)]}
-            # loss: output vs. expected utility 
-
-            # pass input thorugh
-            # gets index from all moves
-            ind = agent.act(matrix, mask)
-            # TODO: account for my_options shrinking due to death
-            agent.set_previous(matrix, ind, reward)
-
-            # get logits layer and take the best moves (highest value after softmax)
-            choice = all_moves[ind]
+        # set a unique index for action if it hasn't been used before, then keep it in memory as a previous experience
+        if choice not in agent.all_actions:
+            agent.all_actions.append(choice)
+        agent.set_previous(matrix, agent.all_actions.index(choice), reward)
 
         return format_decision(self, choice)
 

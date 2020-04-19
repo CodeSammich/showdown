@@ -5,6 +5,7 @@ from collections import namedtuple, deque
 ##Importing the model (function approximator for Q-table)
 from showdown.battle_bots.nn_bot.deep_q_network import DeepQNetwork as QNetwork
 
+from data import all_move_json as moves_lib
 
 import torch
 import torch.nn.functional as F
@@ -23,7 +24,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 class Agent():
     """Interacts with and learns form environment."""
 
-    def __init__(self, state_size, action_size, seed):
+    def __init__(self, state_size, action_size, seed, config):
         """Initialize an Agent object.
 
         Params
@@ -36,11 +37,13 @@ class Agent():
         self.state_size = state_size
         self.action_size = action_size
         self.seed = random.seed(seed)
+        self.config = config
 
         # Store previous info
         self.previous_state = None
         self.previous_action = None
         self.previous_reward = 0
+        self.all_actions = [] # all possible actions for agent to reference index consistently
 
         # Q- Network
         self.qnetwork_local = QNetwork(state_size, action_size, seed).to(device)
@@ -77,12 +80,15 @@ class Agent():
                 experience = self.memory.sample()
                 self.learn(experience, GAMMA)
 
-    def act(self, state, mask, eps=0.2):
+    def act(self, state, my_options, all_switches, eps=0.2):
         """Returns action for given state as per current policy
         Params
         =======
             state (array_like): current state
             eps (float): epsilon, for epsilon-greedy action selection
+
+        Output:
+            Move string chosen, see nn_bot/main.py
         """
         if not self._train:
             eps = 0
@@ -90,14 +96,83 @@ class Agent():
         state = state.float().unsqueeze(0).to(device)
         self.qnetwork_local.eval()
         with torch.no_grad():
-            action_values = self.qnetwork_local(state)
+            # logits output
+            logits = self.qnetwork_local(state)
         self.qnetwork_local.train()
 
-        # Epsilon -greedy action selction
-        if random.random() > eps:
-            return np.argmax(action_values.cpu().data.numpy()*mask)
+        def pick_move_based_on_logits(logits, my_options, all_switches):
+            '''
+            How we choose the mask is dependant on the new 
+            moves categories (whatever flags are ticked and correspond w/ moveset
+            
+            logits: switches 0-5, isStatus, 18 attack move types (physical or special)
+            
+            Special and physical are equally important since pokemon are specialized
+            Logits layer determines what kind of move we want
+            If move is not available, picks move with highest basePower
+
+            Inputs:
+                logits: output of the neural network, a vector of preferences for move
+                my_options: all current possible actions
+                all_switches: all potential switches, including self and fainted
+
+            Output:
+                Best valid move string preferred by neural network
+            '''
+            #   SWITCHES
+            #       encode index (switches 1-6) to each switch in my_options
+            #       have a dict for valid switches (index -> my option string)
+            #       if my option string is not in my_options, ask network again 
+            #
+            #   MOVES
+            #       if network wants something, look up in dict O(1) and see if it matches
+            #       if not, ask network again
+            #
+            #   In either "ask network again" cases, set the max value of action_values to 0
+            #   Note: could also use mask, but I prefer this due to not having to keep track of a third component
+            #
+            types = { # attack move types, in this order for logits:
+                7: 'normal',
+                8: 'fire',
+                9: 'fighting',
+                10: 'water',
+                11: 'flying',
+                12: 'grass',
+                13: 'poison',
+                14: 'electric',
+                15: 'ground',
+                16: 'psychic',
+                17: 'rock',
+                18: 'ice',
+                19: 'bug',
+                20: 'dragon',
+                21: 'ghost',
+                22: 'dark',
+                23: 'steel',
+                24: 'fairy'}
+
+            logits = logits.cpu().data.numpy()[0] # convert to numpy for argmax
+            while True: # run until move is found
+                index = np.argmax(logits) # index of chosen move
+                logits[index] = 0 # remove that choice b/c we repeat if what NN is asking for is invalid
+
+                if index < 6: # switch to selected pokemon
+                    switch = all_switches[index]
+                    if switch in my_options:
+                        return switch
+                else:
+                    for move in my_options: # check all moves for status and type
+                        if move in moves_lib: # if valid pokemon attack, return if it's what NN is asking for
+                            if index == 6: # NN wants a status move
+                                if moves_lib[move]['category'] == 'status':
+                                    return move
+                            elif types[index] == moves_lib[move]['type']: # NN wants a type move
+                                return move
+
+        if random.random() > eps: # epsilon-greedy selection
+            return pick_move_based_on_logits(logits, my_options, all_switches)
         else:
-            return random.choice(np.nonzero(mask)[0])
+            return random.choice(my_options)
 
     def learn(self, experiences, gamma):
         """Update value parameters using given batch of experience tuples.

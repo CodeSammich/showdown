@@ -51,48 +51,53 @@ seed = np.random.randint(0, 50)
 
 """Network Params"""
 state_size = 405
-actions = 10
+actions = 25 
 
-def create_challenge_bot(agent):
+def create_challenge_bot(one=True):
     """
     agent: specify str agent name (i.e rand_bot) or a DQNAgent. If DQNAgent will choose nn_bot
     """
     conf = Config()
-    if type(agent) == type(""):
-        conf.battle_bot_module = ENEMY_BOT
-    else:
-        conf.battle_bot_module = "nn_bot"
+    conf.battle_bot_module = ENEMY_BOT
     conf.save_replay = config.save_replay
     conf.use_relative_weights = config.use_relative_weights
     conf.gambit_exe_path = config.gambit_exe_path
     conf.search_depth = config.search_depth
     conf.websocket_uri = "localhost:8000"
-    conf.username = "cbninjask5uber"
-    conf.password = "aiaccount1"
+    if one:
+        conf.username = "cbninjask5uber"
+        conf.password = "aiaccount1"
+    else:
+        conf.username = "MonkeyAttak"
+        conf.password = "424242"
     conf.bot_mode = "CHALLENGE_USER"
     conf.team_name = ENEMY_TEAM
     conf.pokemon_mode = "gen8ou"
     conf.run_count = 1
-    conf.user_to_challenge = "AcceptGary"
+    if one:
+        conf.user_to_challenge = "AcceptGary"
+    else:
+        conf.user_to_challenge = "AcceptGary2"
     conf.LOG_LEVEL = 'DEBUG'
     return conf
 
-def create_accept_bot(agent):
+def create_accept_bot(one=True):
     """
     agent: specify str agent name (i.e rand_bot) or a DQNAgent. If DQNAgent will choose nn_bot
     """
     conf = Config()
-    if type(agent) == type(""):
-        conf.battle_bot_module = "rand_bot"
-    else:
-        conf.battle_bot_module = "nn_bot"
+    conf.battle_bot_module = "nn_bot"
     conf.save_replay = config.save_replay
     conf.use_relative_weights = config.use_relative_weights
     conf.gambit_exe_path = config.gambit_exe_path
     conf.search_depth = config.search_depth
     conf.websocket_uri = "localhost:8000"
-    conf.username = "AcceptGary"
-    conf.password = "password"
+    if one:
+        conf.username = "AcceptGary"
+        conf.password = "password"
+    else:
+        conf.username = "AcceptGary2"
+        conf.password = "password2"
     conf.bot_mode = "ACCEPT_CHALLENGE"
     conf.team_name = "gen8/ou/simple"
     conf.pokemon_mode = "gen8ou"
@@ -128,7 +133,8 @@ async def showdown(accept, agent=None):
     agent: specify str agent name (i.e rand_bot) or a DQNAgent. If DQNAgent will choose nn_bot
     """
     if accept:
-        conf = create_accept_bot(agent)  # accept gary
+        conf = agent.config
+        # conf = create_accept_bot(agent)  # accept gary
     else:
         await asyncio.sleep(1)  # ensure that challenge bot has time to be created first
         conf = create_challenge_bot(agent)  # cbninjask5uber
@@ -160,7 +166,7 @@ async def showdown(accept, agent=None):
     else:
         raise ValueError("Invalid Bot Mode")
 
-    if type(agent) == type(""):
+    if type(agent) == bool:
         winner = await pokemon_battle(ps_websocket_client, config.pokemon_mode, config, agent = None)
     else:
         winner = await pokemon_battle(ps_websocket_client, config.pokemon_mode, config, agent)
@@ -172,7 +178,7 @@ async def showdown(accept, agent=None):
         finalReward = -1
         losses += 1
 
-    if type(agent) != type("str"):
+    if type(agent) != bool:
         logger.critical("W: {}\tL: {}".format(wins, losses))
         reward = agent.previous_reward + finalReward/10
         logger.critical("End Score: {}".format(reward))
@@ -193,19 +199,27 @@ async def showdown(accept, agent=None):
     #     logger.critical("End Score: {}".format(total_score/(wins + losses)))
     #
     # return
-async def train_episode(agent1, agent2):
+async def train_episode(agent1, agent2, agent3, agent4):
     """
     Goal of function is to put a neural network bot versus a hard coded bot
     """
-    return await asyncio.gather(showdown(accept=True, agent=agent1), showdown(accept=False, agent=agent2))
+    return await asyncio.gather(
+        showdown(accept=True, agent=agent1), 
+        showdown(accept=False, agent=agent2),
+        showdown(accept=True, agent=agent3), 
+        showdown(accept=False, agent=agent4))
 
 async def main():
     """Call this code only once"""
     init_logging(LOG_MODE)
 
-    agent1 = Agent(state_size, actions, seed)
+    agent1 = Agent(state_size, actions, seed, create_accept_bot(one = True))
+    agent2 = Agent(state_size, actions, seed, create_accept_bot(one = False))
     agent1.train()  # agent is in training mode
-    agent2 = "rand_bot" # two agents should actually be playing against eachother
+    agent2.train()
+    agent1.qnetwork_local = agent2.qnetwork_local
+    agent1.qnetwork_target = agent2.qnetwork_target
+    # agent2 = "rand_bot" # two agents should actually be playing against eachother
 
     # reinitialize and load weights
     if LOAD:
@@ -223,7 +237,7 @@ async def main():
         print("episode", episode)
         # await asyncio.sleep(30)
         start = time.time()
-        await train_episode(agent1, agent2=agent2)  # can probably run some of these in parallel using gather
+        await train_episode(agent1, agent2 = True, agent3 = agent2, agent4 = False)  # can probably run some of these in parallel using gather
         print("Elapsed", time.time() - start)
 
         if (episode+1) % merge_networks_time == 0:
