@@ -44,6 +44,15 @@ class BattleBot(Battle):
             all_moves.append(all_moves[0])
         for pkmn in self.user.reserve:
             all_moves.append("{} {}".format(constants.SWITCH_STRING, pkmn.name))
+
+        # TODO: mask is still the moves available
+        # but how we choose the mask is dependant on the new 
+        # moves categories (whatever flags are ticked and correspond w/
+        # moveset
+        #
+        # logits: switches 1-6, isStatus, isPriority, one of 17 types
+        # one-hot encode for move, type is last resort
+        # ignore special/physical since pokemon are specialized
         mask = []
         for item in all_moves:
             mask.append(int(item in my_options))
