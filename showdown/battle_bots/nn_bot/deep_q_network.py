@@ -30,4 +30,3 @@ class DeepQNetwork(nn.Module):
         state = F.softmax(state)
         return state
 
-    #TODO: pre-training function before the RL Agent class uses it for state generation

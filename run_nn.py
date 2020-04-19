@@ -52,7 +52,7 @@ seed = np.random.randint(0, 50)
 
 """Network Params"""
 state_size = 327
-actions = 10
+actions = 25 
 
 def create_challenge_bot(agent):
     """
