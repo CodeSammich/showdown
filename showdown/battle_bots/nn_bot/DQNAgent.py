@@ -42,6 +42,7 @@ class Agent():
         self.previous_state = None
         self.previous_action = None
         self.previous_reward = 0
+        self.all_actions = [] # all possible actions for agent to reference index consistently
 
         # Q- Network
         self.qnetwork_local = QNetwork(state_size, action_size, seed).to(device)
