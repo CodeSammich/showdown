@@ -44,6 +44,7 @@ class Agent():
         self.previous_state = None
         self.previous_action = None
         self.previous_reward = 0
+        self.lossList = []
 
         # Q- Network
         self.qnetwork_local = QNetwork(state_size, action_size, seed).to(device)
@@ -200,6 +201,7 @@ class Agent():
         labels = rewards + (gamma * labels_next * (1 - dones))
 
         loss = criterion(predicted_targets, labels).to(device)
+        self.lossList.append(loss.detach().numpy())  # convert to numpy
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()

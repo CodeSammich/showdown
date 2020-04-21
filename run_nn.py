@@ -230,6 +230,8 @@ async def main():
 
     agent1 = Agent(state_size, actions, seed, create_accept_bot(one = True))
     agent2 = Agent(state_size, actions, seed, create_accept_bot(one = False))
+    agent1.lossList = agent2.lossList
+
     agent1.train()  # agent is in training mode
     agent2.train()
     # agent2 = "rand_bot" # two agents should actually be playing against eachother
@@ -254,6 +256,7 @@ async def main():
         agent2.eval()
 
     """main training loop"""
+    lossList = []
     for episode in range(episodes):
         print("episode", episode)
         # await asyncio.sleep(30)
@@ -283,12 +286,24 @@ async def main():
                     print('Timeout on test run: ' + str(episode//eval_time))
             agent1.train()  # allows the agent to train again
             agent2.train()  # allows the agent to train again
+
+        # print dqn loss
+        plt.clf()
+        episodeLoss = np.mean(agent1.lossList)
+        lossList.append(episodeLoss)
+        plt.plot(range(episode+1), lossList, label="agent loss list")
+        agent1.lossList = []
+        agent2.lossList = agent1.lossList
+        
+        plt.legend()
+        plt.draw()
+
     if SAVE:
         torch.save({
             'local': agent1.qnetwork_local.state_dict(),
             'target': agent1.qnetwork_target.state_dict()
         }, 'nn_bot_trained')
-    # Plot Graphs
+        # Plot Graphs
     plt.clf()
     plt.plot(episodeList, randRewardList, label="Minimax bot Curve")
     plt.plot(episodeList, damageRewardList, label="Damage bot Curve")
