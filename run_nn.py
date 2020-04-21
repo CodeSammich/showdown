@@ -30,17 +30,17 @@ from showdown.engine.evaluate import evaluate
 logger = logging.getLogger(__name__)
 
 # Constants
-ENEMY_BOT = "safest"
+ENEMY_BOT = "most_damage"
 ENEMY_TEAM = "random"
 POSSIBLE_TEAMS = ["clef_sand", "band_toad", "balance", "simple", "weavile_stall", "mew_stall"]
 LOG_MODE = "CRITICAL"
-LOAD = True
+LOAD = False
 SAVE = False
-TRAIN = False
+TRAIN = True
 """Training params"""
-num_games = 10
-TIMEOUT = 600 #seconds
-episodes = 5
+num_games = 2
+TIMEOUT = 60 #seconds
+episodes = 50
 merge_networks_time = 10000  # run this many times and then merge multiple agents TODO
 
 """Performance Params"""
@@ -288,15 +288,10 @@ async def main():
             agent2.train()  # allows the agent to train again
 
         # print dqn loss
-        plt.clf()
         episodeLoss = np.mean(agent1.lossList)
         lossList.append(episodeLoss)
-        plt.plot(range(episode+1), lossList, label="agent loss list")
         agent1.lossList = []
         agent2.lossList = agent1.lossList
-        
-        plt.legend()
-        plt.draw()
 
     if SAVE:
         torch.save({
@@ -305,8 +300,9 @@ async def main():
         }, 'nn_bot_trained')
         # Plot Graphs
     plt.clf()
-    plt.plot(episodeList, randRewardList, label="Minimax bot Curve")
-    plt.plot(episodeList, damageRewardList, label="Damage bot Curve")
+    # plt.plot(episodeList, randRewardList, label="Minimax bot Curve")
+    # plt.plot(episodeList, damageRewardList, label="Damage bot Curve")
+    plt.plot(range(episode+1), lossList, label="agent loss list")
     plt.legend()
     plt.draw()
     plt.show()
