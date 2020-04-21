@@ -204,7 +204,7 @@ class Agent():
         self.lossList.append(loss.detach().numpy())  # convert to numpy
         self.optimizer.zero_grad()
         loss.backward()
-        for param in model.parameters():
+        for param in self.qnetwork_local.parameters():
             param.grad.data.clamp_(-1, 1)
         self.optimizer.step()
 

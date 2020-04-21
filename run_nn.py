@@ -39,7 +39,7 @@ SAVE = False
 TRAIN = True
 """Training params"""
 num_games = 2
-TIMEOUT = 60 #seconds
+TIMEOUT = 120 #seconds
 episodes = 50
 merge_networks_time = 10000  # run this many times and then merge multiple agents TODO
 
