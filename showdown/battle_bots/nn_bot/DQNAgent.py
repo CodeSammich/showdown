@@ -14,8 +14,8 @@ import torch.optim as optim
 BUFFER_SIZE = int(1e5)  # replay buffer size
 BATCH_SIZE = 16  # minibatch size
 GAMMA = 0.99  # discount factor
-TAU = .5 # 1e-3  # for soft update of target parameters
-LR = 5e-4  # learning rate
+TAU = .2 # 1e-3  # for soft update of target parameters
+LR = 5e-5 #5e-4  # learning rate
 UPDATE_EVERY = 4  # how often to update the network
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -36,7 +36,8 @@ class Agent():
 
         self.state_size = state_size
         self.action_size = action_size
-        self.seed = random.seed(seed)
+        self.seed = seed
+        random.seed(self.seed)
         self.config = config
 
         # Store previous info
@@ -222,9 +223,12 @@ class Agent():
 
     def train(self):
         self._train = True
+        self.qnetwork_local.train()
 
     def eval(self):
         self._train = False
+        self.qnetwork_target.eval()
+
 class ReplayBuffer:
     """Fixed -size buffer to store experience tuples."""
 

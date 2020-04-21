@@ -29,7 +29,7 @@ class BattleBot(Battle):
 
         most_damage = -1
         choice = None
-        if random.random() < .7:
+        if random.random() < .5:
             rand = random.randint(0, len(my_options) - 1)
             choice = my_options[rand]
         else:

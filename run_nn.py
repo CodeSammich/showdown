@@ -30,21 +30,23 @@ from showdown.engine.evaluate import evaluate
 logger = logging.getLogger(__name__)
 
 # Constants
-ENEMY_BOT = "rand_max"
+ENEMY_BOT = "safest"
 ENEMY_TEAM = "random"
 POSSIBLE_TEAMS = ["clef_sand", "band_toad", "balance", "simple", "weavile_stall", "mew_stall"]
 LOG_MODE = "CRITICAL"
-LOAD = False
-SAVE = True
+LOAD = True
+SAVE = False
+TRAIN = False
 """Training params"""
-num_games = 3
-episodes = 20
+num_games = 10
+TIMEOUT = 600 #seconds
+episodes = 5
 merge_networks_time = 10000  # run this many times and then merge multiple agents TODO
 
 """Performance Params"""
-eval_time = 5 # evals the network every eval_time steps
+eval_time = 50 # evals the network every eval_time steps
 eval_run_battles = 1  # runs this many battles to determine performance against
-eval_opponent = "safest"  # what is the neural network evaluating against
+# eval_opponent = "safest"  # what is the neural network evaluating against
 randRewardList = []
 damageRewardList = []
 episodeList = []
@@ -139,7 +141,7 @@ async def showdown(accept, agent=None):
         # conf = create_accept_bot(agent)  # accept gary
     else:
         await asyncio.sleep(1)  # ensure that challenge bot has time to be created first
-        if agent == "True" or agent == "rand_bot":
+        if agent == "True" or agent == "rand_bot" or agent == "safest":
             if agent == "True": agent = ENEMY_BOT
             conf = create_challenge_bot(True, agent)  # cbninjask5uber
         else:
@@ -242,19 +244,25 @@ async def main():
         agent1.qnetwork_target = model
 
     # Set networks to be equal
-    agent1.qnetwork_local = agent2.qnetwork_local
-    agent1.qnetwork_target = agent2.qnetwork_target
+    agent2.qnetwork_local = agent1.qnetwork_local
+    agent2.qnetwork_target = agent1.qnetwork_target
+    if TRAIN:
+        agent1.train()
+        agent2.train()
+    else:
+        agent1.eval()
+        agent2.eval()
+
     """main training loop"""
     for episode in range(episodes):
-        breakpoint()
         print("episode", episode)
         # await asyncio.sleep(30)
         start = time.time()
         try: # can probably run some of these in parallel using gather
             # await asyncio.wait_for(eternity(), timeout=1.0)
-            await asyncio.wait_for(train_episode(agent1, "True", agent2, "False"), timeout=180)
+            await asyncio.wait_for(train_episode(agent1, "True", agent2, "False"), timeout=TIMEOUT)
         except asyncio.TimeoutError:
-            print('timeout!')
+            print('Timeout on iteration: ' + str(episode))
         print("Elapsed", time.time() - start)
 
         if (episode+1) % merge_networks_time == 0:
@@ -262,13 +270,19 @@ async def main():
 
         if (episode + 1) % eval_time == 0:
             agent1.eval()
-            for i in range(eval_run_battles):
-                print("Eval Number", i)
-                randReward, _, damageReward, _ = await train_episode(agent1, "rand_bot", agent2, "most_damage")
-                episodeList.append(episode)
-                randRewardList.append(randReward)
-                damageRewardList.append(damageReward)
+            agent2.eval()
+            for _ in range(eval_run_battles):
+                print("Eval Number", episode//eval_time)
+                try: 
+                    randReward, _, damageReward, _ = await asyncio.wait_for(
+                        train_episode(agent1, "safest", agent2, "most_damage"), timeout=TIMEOUT)
+                    episodeList.append(episode)
+                    randRewardList.append(randReward)
+                    damageRewardList.append(damageReward)
+                except asyncio.TimeoutError:
+                    print('Timeout on test run: ' + str(episode//eval_time))
             agent1.train()  # allows the agent to train again
+            agent2.train()  # allows the agent to train again
     if SAVE:
         torch.save({
             'local': agent1.qnetwork_local.state_dict(),
@@ -276,8 +290,8 @@ async def main():
         }, 'nn_bot_trained')
     # Plot Graphs
     plt.clf()
-    plt.plot(episodeList, randRewardList, label="Random bot Graph")
-    plt.plot(episodeList, damageRewardList, label="Damage bot Graph")
+    plt.plot(episodeList, randRewardList, label="Minimax bot Curve")
+    plt.plot(episodeList, damageRewardList, label="Damage bot Curve")
     plt.legend()
     plt.draw()
     plt.show()
