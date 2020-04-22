@@ -194,7 +194,7 @@ async def showdown(accept, agent=None):
             reward += agent.previous_reward + finalReward*100
             # logger.critical("End Score: {}".format(reward))
             # winPercList.append(reward)
-            agent.step(agent.previous_state, agent.previous_action, finalReward, agent.previous_state, True)
+            await agent.step(agent.previous_state, agent.previous_action, finalReward, agent.previous_state, True)
         else:
             logger.debug("W: {}\tL: {}".format(wins, losses))
 
@@ -312,3 +312,4 @@ async def main():
 if __name__ == "__main__":
     asyncio.get_event_loop().run_until_complete(main())
     print("done")
+
