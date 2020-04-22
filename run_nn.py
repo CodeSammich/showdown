@@ -30,17 +30,17 @@ from showdown.engine.evaluate import evaluate
 logger = logging.getLogger(__name__)
 
 # Constants
-ENEMY_BOT = "most_damage"
+ENEMY_BOT = "safest"
 ENEMY_TEAM = "random"
 POSSIBLE_TEAMS = ["clef_sand", "band_toad", "balance", "simple", "weavile_stall", "mew_stall"]
 LOG_MODE = "CRITICAL"
-LOAD = False
+LOAD = True
 SAVE = False
 TRAIN = True
 """Training params"""
-num_games = 2
+num_games = 1
 TIMEOUT = 120 #seconds
-episodes = 50
+episodes = 3
 merge_networks_time = 10000  # run this many times and then merge multiple agents TODO
 
 """Performance Params"""
@@ -290,6 +290,7 @@ async def main():
         # print dqn loss
         episodeLoss = np.mean(agent1.lossList)
         lossList.append(episodeLoss)
+        print(episodeLoss)
         agent1.lossList = []
         agent2.lossList = agent1.lossList
 
@@ -300,11 +301,15 @@ async def main():
         }, 'nn_bot_trained')
         # Plot Graphs
     plt.clf()
-    # plt.plot(episodeList, randRewardList, label="Minimax bot Curve")
-    # plt.plot(episodeList, damageRewardList, label="Damage bot Curve")
+    plt.figure()
     plt.plot(range(episode+1), lossList, label="agent loss list")
     plt.legend()
-    plt.draw()
+    plt.savefig("Agent_loss_421.png")
+    plt.figure()
+    plt.plot(episodeList, damageRewardList, label="Damage bot Curve")
+    plt.plot(episodeList, randRewardList, label="Minimax bot Curve")
+    plt.legend()
+    plt.savefig("damage_minimax_421.png")
     plt.show()
     print("done training")
 
