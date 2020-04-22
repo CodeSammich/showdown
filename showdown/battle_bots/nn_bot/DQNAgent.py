@@ -6,19 +6,23 @@ from collections import namedtuple, deque
 from showdown.battle_bots.nn_bot.deep_q_network import DeepQNetwork as QNetwork
 
 from data import all_move_json as moves_lib
+import asyncio
 
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
 
 BUFFER_SIZE = int(1e5)  # replay buffer size
-BATCH_SIZE = 16  # minibatch size
+BATCH_SIZE = 32  # minibatch size
 GAMMA = 0.99  # discount factor
 TAU = 1e-3  # for soft update of target parameters
 LR = 5e-4  # learning rate
 UPDATE_EVERY = 4  # how often to update the network
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+# mutex locking for multiprocessing
+_lock_table = {'locked': False}
 
 
 class Agent():
@@ -64,7 +68,7 @@ class Agent():
         self.previous_action = action
         self.previous_reward = reward
 
-    def step(self, state, action, reward, next_step, done):
+    async def step(self, state, action, reward, next_step, done):
         if not self._train:
             pass
             # print("Will not update network because it is in eval mode")
@@ -79,7 +83,7 @@ class Agent():
 
             if len(self.memory) > BATCH_SIZE:
                 experience = self.memory.sample()
-                self.learn(experience, GAMMA)
+                await self.learn(experience, GAMMA)
 
     def act(self, state, my_options, all_switches, eps=0.2):
         """Returns action for given state as per current policy
@@ -179,13 +183,18 @@ class Agent():
             # pick a random index and return both it and the element
             return pick_move_based_on_logits(logits, my_options, all_switches, pick_random=True)
 
-    def learn(self, experiences, gamma):
+    async def learn(self, experiences, gamma):
         """Update value parameters using given batch of experience tuples.
         Params
         =======
             experiences (Tuple[torch.Variable]): tuple of (s, a, r, s', done) tuples
             gamma (float): discount factor
         """
+        # LOCK
+        while _lock_table['locked']:
+            await asyncio.sleep(1)
+
+        _lock_table['locked'] = True
         states, actions, rewards, next_state, dones = experiences
         ## TODO: compute and minimize the loss
         criterion = torch.nn.MSELoss()
@@ -210,6 +219,8 @@ class Agent():
 
         # ------------------- update target network ------------------- #
         self.soft_update(self.qnetwork_local, self.qnetwork_target, TAU)
+        # UNLOCK
+        _lock_table['locked'] = False
 
     def soft_update(self, local_model, target_model, tau):
         """Soft update model parameters.
