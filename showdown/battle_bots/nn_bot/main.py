@@ -28,7 +28,7 @@ class BattleBot(Battle):
                            constants.PSYCHIC_TERRAIN]
         self.side_conds = list(constants.COURT_CHANGE_SWAPS) # init for stable
 
-    def find_best_move(self, agent=None): # calls best_move to start even when it does not go first?
+    async def find_best_move(self, agent=None): # calls best_move to start even when it does not go first?
         state = self.create_state()
         my_options = self.get_all_options()[0] # all valid actions, already accounts for struggle and switches
 
@@ -55,7 +55,7 @@ class BattleBot(Battle):
         reward = evaluate(state)
         # Calculate New Reward
         if agent.previous_state is not None:
-            agent.step(agent.previous_state, agent.previous_action, (reward - agent.previous_reward)/1000, matrix, False)
+            await agent.step(agent.previous_state, agent.previous_action, (reward - agent.previous_reward)/1000, matrix, False)
 
         # pass through network and return choice
         idx, choice = agent.act(matrix, my_options, all_switches)

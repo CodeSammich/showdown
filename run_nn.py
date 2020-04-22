@@ -34,17 +34,17 @@ ENEMY_BOT = "safest"
 ENEMY_TEAM = "random"
 POSSIBLE_TEAMS = ["clef_sand", "band_toad", "balance", "simple", "weavile_stall", "mew_stall"]
 LOG_MODE = "CRITICAL"
-LOAD = True
-SAVE = False
+LOAD = False
+SAVE = True
 TRAIN = True
 """Training params"""
-num_games = 1
-TIMEOUT = 120 #seconds
-episodes = 3
+num_games = 3
+TIMEOUT = 200 #seconds
+episodes = 250
 merge_networks_time = 10000  # run this many times and then merge multiple agents TODO
 
 """Performance Params"""
-eval_time = 50 # evals the network every eval_time steps
+eval_time = 5 # evals the network every eval_time steps
 eval_run_battles = 1  # runs this many battles to determine performance against
 # eval_opponent = "safest"  # what is the neural network evaluating against
 randRewardList = []
@@ -194,7 +194,7 @@ async def showdown(accept, agent=None):
             reward += agent.previous_reward + finalReward*100
             # logger.critical("End Score: {}".format(reward))
             # winPercList.append(reward)
-            agent.step(agent.previous_state, agent.previous_action, finalReward, agent.previous_state, True)
+            await agent.step(agent.previous_state, agent.previous_action, finalReward, agent.previous_state, True)
         else:
             logger.debug("W: {}\tL: {}".format(wins, losses))
 
@@ -289,6 +289,7 @@ async def main():
 
         # print dqn loss
         episodeLoss = np.mean(agent1.lossList)
+        print(episodeLoss)
         lossList.append(episodeLoss)
         print(episodeLoss)
         agent1.lossList = []
@@ -316,3 +317,4 @@ async def main():
 if __name__ == "__main__":
     asyncio.get_event_loop().run_until_complete(main())
     print("done")
+

@@ -34,10 +34,11 @@ async def async_pick_move(battle, agent=None):
                 pool, battle_copy.find_best_move
             )
     else:  # modify this?
-        with concurrent.futures.ThreadPoolExecutor() as pool:
-            best_move = await loop.run_in_executor(
-                pool, battle_copy.find_best_move, agent
-            )
+        #with concurrent.futures.ThreadPoolExecutor() as pool:
+            #best_move = await loop.run_in_executor(
+            #    pool, battle_copy.find_best_move, agent
+            #)
+        best_move = await battle_copy.find_best_move(agent)
     choice = best_move[0]
     if constants.SWITCH_STRING in choice:
         battle.user.last_used_move = LastUsedMove(battle.user.active.name, "switch {}".format(choice.split()[-1]), battle.turn)
