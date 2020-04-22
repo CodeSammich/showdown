@@ -289,6 +289,7 @@ async def main():
 
         # print dqn loss
         episodeLoss = np.mean(agent1.lossList)
+        print(episodeLoss)
         lossList.append(episodeLoss)
         agent1.lossList = []
         agent2.lossList = agent1.lossList
