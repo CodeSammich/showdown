@@ -6,7 +6,7 @@ from showdown.engine.find_state_instructions import update_attacking_move
 from ..helpers import format_decision
 
 from showdown.battle_bots.nn_bot.deep_q_network import DeepQNetwork
-from showdown.engine.evaluate import evaluate, evaluate2
+from showdown.engine.evaluate import evaluate, evaluate2, evaluate3
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -52,15 +52,15 @@ class BattleBot(Battle):
 
         # convert state to matrix
         matrix = self.state_to_vector()
-        totalEnemyHealth = evaluate2(state)
+        totalEnemyScore = evaluate3(state)  # 6 is highest meaning they are all at full hp
         # Calculate New Reward
         if agent.previous_state is not None:
 
-            await agent.step(agent.previous_state, agent.previous_action, (agent.previous_reward - totalEnemyHealth)/6, matrix, False)
+            await agent.step(agent.previous_state, agent.previous_action, (agent.previous_reward - totalEnemyScore)/6, matrix, False)
 
         # pass through network and return choice
         idx, choice = agent.act(matrix, my_options, all_switches)
-        agent.set_previous(matrix, idx, totalEnemyHealth)
+        agent.set_previous(matrix, idx, totalEnemyScore)
 
         return format_decision(self, choice)
 
