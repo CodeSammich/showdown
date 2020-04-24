@@ -11,11 +11,11 @@ class DeepQNetwork(nn.Module):
 
         # start by copying http://cs230.stanford.edu/projects_fall_2018/reports/12447633.pdf network
         self.fc1 = nn.Linear(state_size, 128)
-        # self.batch_norm1 = nn.BatchNorm1d(128)
+        #self.batch_norm1 = nn.BatchNorm1d(128)
         self.fc2 = nn.Linear(128, 128)
-        # self.batch_norm2 = nn.BatchNorm1d(128)
+        #self.batch_norm2 = nn.BatchNorm1d(128)
         self.fc3 = nn.Linear(128, 64)
-        # self.batch_norm3 = nn.BatchNorm1d(128)
+        #self.batch_norm3 = nn.BatchNorm1d(64)
         self.logits = nn.Linear(64, action_size)
         self.softmax = nn.Softmax()
 
@@ -24,11 +24,22 @@ class DeepQNetwork(nn.Module):
         # state vector contains: weather, field, etc..., opponent's active, my active, my remaining
         # drawback: it forgets previously released opponent's pokemon
         state = self.fc1(state)
+<<<<<<< HEAD
         state = F.leaky_relu(state)
         state = self.fc2(state)
         state = F.leaky_relu(state)
         state = self.fc3(state)
         state = F.leaky_relu(state)
+=======
+        #state = self.batch_norm1(state)
+        state = F.relu(state)
+        state = self.fc2(state)
+        #state = self.batch_norm2(state)
+        state = F.relu(state)
+        state = self.fc3(state)
+        #state = self.batch_norm3(state)
+        state = F.relu(state)
+>>>>>>> f65602cc2ffafcf23607d417b9c75e71096f285f
         state = self.logits(state)
         state = F.softmax(state)
         return state

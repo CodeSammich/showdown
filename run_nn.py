@@ -40,11 +40,15 @@ TRAIN = True
 """Training params"""
 num_games = 3
 TIMEOUT = 200 #seconds
+<<<<<<< HEAD
 episodes = 300 
+=======
+episodes = 200
+>>>>>>> f65602cc2ffafcf23607d417b9c75e71096f285f
 merge_networks_time = 10000  # run this many times and then merge multiple agents TODO
 
 """Performance Params"""
-eval_time = 5 # evals the network every eval_time steps
+eval_time = 5  # evals the network every eval_time steps
 eval_run_battles = 1  # runs this many battles to determine performance against
 # eval_opponent = "safest"  # what is the neural network evaluating against
 randRewardList = []
@@ -180,7 +184,7 @@ async def showdown(accept, agent=None):
             raise ValueError("Invalid Bot Mode")
 
         if type(agent) == str:
-            winner = await pokemon_battle(ps_websocket_client, config.pokemon_mode, config, agent = None)
+            winner = await pokemon_battle(ps_websocket_client, config.pokemon_mode, config, agent=None)
         else:
             winner = await pokemon_battle(ps_websocket_client, config.pokemon_mode, config, agent)
 
@@ -188,12 +192,12 @@ async def showdown(accept, agent=None):
             finalReward = 1
             wins += 1
         else:
-            finalReward = -1
+            finalReward = 0
             losses += 1
 
         if type(agent) != str:
             # logger.critical("W: {}\tL: {}".format(wins, losses))
-            reward += agent.previous_reward + finalReward*100
+            reward += agent.previous_reward + finalReward
             # logger.critical("End Score: {}".format(reward))
             # winPercList.append(reward)
             await agent.step(agent.previous_state, agent.previous_action, finalReward, agent.previous_state, True)

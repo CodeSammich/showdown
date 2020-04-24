@@ -132,3 +132,14 @@ def evaluate(state):
             score -= count * Scoring.POKEMON_COUNT_SCORED_SIDE_CONDITIONS[condition] * opponent_alive_reserves_count
 
     return int(score)
+
+"""evaluate method based solely on hp"""
+def evaluate2(state):
+    # evaluate the opponent's visible pokemon
+    totalHP = 0
+    for pkmn in state.opponent.reserve.values():
+        this_pkmn_score = (float(pkmn.hp) / pkmn.maxhp)
+        totalHP += this_pkmn_score
+    return totalHP
+
+#    Scoring.POKEMON_HP * (float(pkmn.hp) / pkmn.maxhp)
