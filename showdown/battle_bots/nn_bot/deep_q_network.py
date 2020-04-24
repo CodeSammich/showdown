@@ -24,11 +24,11 @@ class DeepQNetwork(nn.Module):
         # state vector contains: weather, field, etc..., opponent's active, my active, my remaining
         # drawback: it forgets previously released opponent's pokemon
         state = self.fc1(state)
-        state = F.relu(state)
+        state = F.leaky_relu(state)
         state = self.fc2(state)
-        state = F.relu(state)
+        state = F.leaky_relu(state)
         state = self.fc3(state)
-        state = F.relu(state)
+        state = F.leaky_relu(state)
         state = self.logits(state)
         state = F.softmax(state)
         return state
