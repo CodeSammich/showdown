@@ -40,11 +40,7 @@ TRAIN = True
 """Training params"""
 num_games = 3
 TIMEOUT = 200 #seconds
-<<<<<<< HEAD
 episodes = 300 
-=======
-episodes = 200
->>>>>>> f65602cc2ffafcf23607d417b9c75e71096f285f
 merge_networks_time = 10000  # run this many times and then merge multiple agents TODO
 
 """Performance Params"""
