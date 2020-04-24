@@ -34,17 +34,17 @@ ENEMY_BOT = "safest"
 ENEMY_TEAM = "random"
 POSSIBLE_TEAMS = ["clef_sand", "band_toad", "balance", "simple", "weavile_stall", "mew_stall"]
 LOG_MODE = "CRITICAL"
-LOAD = False
+LOAD = True
 SAVE = True
 TRAIN = True
 """Training params"""
 num_games = 3
 TIMEOUT = 200 #seconds
-episodes = 250
+episodes = 80
 merge_networks_time = 10000  # run this many times and then merge multiple agents TODO
 
 """Performance Params"""
-eval_time = 5 # evals the network every eval_time steps
+eval_time = 4 # evals the network every eval_time steps
 eval_run_battles = 1  # runs this many battles to determine performance against
 # eval_opponent = "safest"  # what is the neural network evaluating against
 randRewardList = []
@@ -186,7 +186,7 @@ async def showdown(accept, agent=None):
             finalReward = 1
             wins += 1
         else:
-            finalReward = -1
+            finalReward = -.1
             losses += 1
 
         if type(agent) != str:
@@ -289,9 +289,7 @@ async def main():
 
         # print dqn loss
         episodeLoss = np.mean(agent1.lossList)
-        print(episodeLoss)
         lossList.append(episodeLoss)
-        print(episodeLoss)
         agent1.lossList = []
         agent2.lossList = agent1.lossList
 

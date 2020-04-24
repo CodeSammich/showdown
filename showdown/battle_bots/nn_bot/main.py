@@ -55,13 +55,17 @@ class BattleBot(Battle):
         reward = evaluate(state)
         # Calculate New Reward
         if agent.previous_state is not None:
-            await agent.step(agent.previous_state, agent.previous_action, (reward - agent.previous_reward)/1000, matrix, False)
+            await agent.step(agent.previous_state, agent.previous_action, self.LReLU((reward - agent.previous_reward)/2000), matrix, False)
 
         # pass through network and return choice
         idx, choice = agent.act(matrix, my_options, all_switches)
         agent.set_previous(matrix, idx, reward)
 
         return format_decision(self, choice)
+    
+    def LReLU(self, x):
+        x = max(x, .1*x)
+        return float(x)
 
     def state_to_vector(self):
         '''
@@ -80,31 +84,31 @@ class BattleBot(Battle):
 
         ####### ENVIRONMENT #######
         # convert weather to a 6x1 tensor of 0s, set approriate weather flag to 1
-        one_hot_weather = [int(w == self.weather) for w in self.weather_conds] 
-        weather_vec = torch.IntTensor(one_hot_weather)
+        one_hot_weather = [float(w == self.weather) for w in self.weather_conds] 
+        weather_vec = torch.Tensor(one_hot_weather)
         state_matrix.append(weather_vec)
 
         # convert field to a 4x1 zeros tensor, set appropriate flag to 1
-        one_hot_field = [int(w == self.field) for w in self.field_conds] #LET MY PEOPLE GO
-        field_vec = torch.IntTensor(one_hot_field)
+        one_hot_field = [float(w == self.field) for w in self.field_conds] #LET MY PEOPLE GO
+        field_vec = torch.Tensor(one_hot_field)
         state_matrix.append(field_vec)
 
         # convert field to a 1x1  tensor
-        trick_room_vec = torch.IntTensor([self.trick_room])
+        trick_room_vec = torch.Tensor([self.trick_room])
         state_matrix.append(trick_room_vec)
 
         ###### OPPONENT ########
         # convert opponent's wish to one vector of 1 or 0
         opp_wish = 1 if self.opponent.wish[0] > 0 else 0
-        opp_wish_vec = torch.IntTensor([opp_wish])
+        opp_wish_vec = torch.Tensor([opp_wish])
         state_matrix.append(opp_wish_vec)
 
         # convert opponent's side conditions to one vector
         # Spikes range from 0 to 3, Toxic Spikes range from 0 to 2
         # for all side condition keys, put corresponding value in stable order
-        opp_side_cond_dict = self.opponent.side_conditions # dict (str -> int)
+        opp_side_cond_dict = self.opponent.side_conditions # dict (str -> float)
         opp_side_cond = [opp_side_cond_dict[cond] for cond in self.side_conds] 
-        opp_side_cond_vec = torch.IntTensor(opp_side_cond)
+        opp_side_cond_vec = torch.Tensor(opp_side_cond)
         state_matrix.append(opp_side_cond_vec)
         
         # convert opponent's active to one vector
@@ -119,19 +123,19 @@ class BattleBot(Battle):
         ######## USER #########
         # convert user's wish to one vector
         user_wish = 1 if self.user.wish[0] > 0 else 0
-        user_wish_vec = torch.IntTensor([user_wish])
+        user_wish_vec = torch.Tensor([user_wish])
         state_matrix.append(user_wish_vec)
 
         # convert user's side conditions to one vector
         # Spikes range from 0 to 3, Toxic Spikes range from 0 to 2
         # for all side condition keys, put corresponding value in stable order
-        user_side_cond_dict = self.user.side_conditions # dict (str -> int)
+        user_side_cond_dict = self.user.side_conditions # dict (str -> float)
         user_side_cond = [user_side_cond_dict[cond] for cond in self.side_conds] 
-        user_side_cond_vec = torch.IntTensor(user_side_cond)
+        user_side_cond_vec = torch.Tensor(user_side_cond)
         state_matrix.append(user_side_cond_vec)
 
         # Encode who is currently Active as 1-hot
-        one_hot_pokemon = torch.IntTensor([int(self.user.active == poke) for poke in self.all_pokemon])
+        one_hot_pokemon = torch.Tensor([float(self.user.active == poke) for poke in self.all_pokemon])
         state_matrix.append(one_hot_pokemon)
 
         # convert user's active to one vector
@@ -142,6 +146,6 @@ class BattleBot(Battle):
         for pokemon in reserve:
             state_matrix.append(pokemon.to_vector())
 
-        # flatten final self matrix into one vector
+        # flatten final self matrix floato one vector
         return torch.cat(state_matrix, dim=0)
 

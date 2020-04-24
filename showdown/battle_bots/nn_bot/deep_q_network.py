@@ -11,13 +11,13 @@ class DeepQNetwork(nn.Module):
 
         # start by copying http://cs230.stanford.edu/projects_fall_2018/reports/12447633.pdf network
         self.fc1 = nn.Linear(state_size, 128)
-        # self.batch_norm1 = nn.BatchNorm1d(128)
+        # # self.batch_norm1 = nn.BatchNorm1d(128)
         self.fc2 = nn.Linear(128, 128)
-        # self.batch_norm2 = nn.BatchNorm1d(128)
+        # # self.batch_norm2 = nn.BatchNorm1d(128)
         self.fc3 = nn.Linear(128, 64)
-        # self.batch_norm3 = nn.BatchNorm1d(128)
+        # # self.batch_norm3 = nn.BatchNorm1d(128)
         self.logits = nn.Linear(64, action_size)
-        self.softmax = nn.Softmax()
+        # self.softmax = nn.Softmax()
 
     def forward(self, state):
         # one vector of the entire state
@@ -32,4 +32,3 @@ class DeepQNetwork(nn.Module):
         state = self.logits(state)
         state = F.softmax(state)
         return state
-
