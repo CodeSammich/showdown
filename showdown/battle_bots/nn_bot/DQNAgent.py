@@ -14,7 +14,7 @@ import torch.optim as optim
 
 BUFFER_SIZE = int(1e4)  # replay buffer size
 BATCH_SIZE = 16  # minibatch size
-GAMMA = 0.90  # discount factor
+GAMMA = 0.80  # discount factor
 TAU = 1e-2  # for soft update of target parameters
 LR = 5e-4  # learning rate
 UPDATE_EVERY = 4  # how often to update the network
@@ -70,7 +70,7 @@ class Agent():
 
     async def step(self, state, action, reward, next_step, done):
         if not self._train:
-            pass
+            return
             # print("Will not update network because it is in eval mode")
 
         # Save experience in replay memory

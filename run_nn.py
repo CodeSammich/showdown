@@ -188,7 +188,7 @@ async def showdown(accept, agent=None):
             finalReward = 1
             wins += 1
         else:
-            finalReward = 0
+            finalReward = -.5
             losses += 1
 
         if type(agent) != str:
