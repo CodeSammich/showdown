@@ -6,7 +6,7 @@ from showdown.engine.find_state_instructions import update_attacking_move
 from ..helpers import format_decision
 
 from showdown.battle_bots.nn_bot.deep_q_network import DeepQNetwork
-from showdown.engine.evaluate import evaluate, evaluate2
+from showdown.engine.evaluate import evaluate, evaluate2, evaluate3
 import torch
 import torch.nn as nn
 import torch.optim as optim

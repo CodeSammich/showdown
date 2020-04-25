@@ -140,6 +140,22 @@ def evaluate2(state):
     for pkmn in state.opponent.reserve.values():
         this_pkmn_score = (float(pkmn.hp) / pkmn.maxhp)
         totalHP += this_pkmn_score
-    return totalHP
+    return totalHP + state.self.active.hp / state.self.active.maxhp
+
+"""evaluate method based  on hp and fainting other pokemon"""
+def evaluate3(state):
+    """9 points are possible. 6 for all the pokemon's health. 3 in total if all their pokemon are alive """
+    # evaluate the opponent's visible pokemon
+    totalHP = evaluate2(state)  # calculates the total amount of hp the other team has (max 6)
+    alivePokemon = 0
+    for pkmn in state.opponent.reserve.values():
+        if pkmn.hp != 0:
+            alivePokemon += 1
+
+    if state.opponent.active.hp != 0:
+        alivePokemon += 1
+
+    return totalHP + alivePokemon/2
+
 
 #    Scoring.POKEMON_HP * (float(pkmn.hp) / pkmn.maxhp)
