@@ -30,26 +30,28 @@ from showdown.engine.evaluate import evaluate
 logger = logging.getLogger(__name__)
 
 # Constants
-ENEMY_BOT = "safest"
+ENEMY_BOT = "most_damage"
 ENEMY_TEAM = "random"
 POSSIBLE_TEAMS = ["clef_sand", "band_toad", "balance", "simple", "weavile_stall", "mew_stall"]
 LOG_MODE = "CRITICAL"
-LOAD = True
+LOAD = False
 SAVE = True
 TRAIN = True
 """Training params"""
-num_games = 3
-TIMEOUT = 200 #seconds
-episodes = 80
+num_games = 5
+TIMEOUT = 300 #seconds
+episodes = 200
 merge_networks_time = 10000  # run this many times and then merge multiple agents TODO
 
 """Performance Params"""
-eval_time = 4 # evals the network every eval_time steps
+eval_time = 5  # evals the network every eval_time steps
 eval_run_battles = 1  # runs this many battles to determine performance against
 # eval_opponent = "safest"  # what is the neural network evaluating against
 randRewardList = []
 damageRewardList = []
 episodeList = []
+total_wins_rand = []
+total_wins_damage = []
 
 seed = np.random.randint(0, 50)
 
@@ -178,7 +180,7 @@ async def showdown(accept, agent=None):
             raise ValueError("Invalid Bot Mode")
 
         if type(agent) == str:
-            winner = await pokemon_battle(ps_websocket_client, config.pokemon_mode, config, agent = None)
+            winner = await pokemon_battle(ps_websocket_client, config.pokemon_mode, config, agent=None)
         else:
             winner = await pokemon_battle(ps_websocket_client, config.pokemon_mode, config, agent)
 
@@ -186,12 +188,12 @@ async def showdown(accept, agent=None):
             finalReward = 1
             wins += 1
         else:
-            finalReward = -.1
+            finalReward = 0
             losses += 1
 
         if type(agent) != str:
             # logger.critical("W: {}\tL: {}".format(wins, losses))
-            reward += agent.previous_reward + finalReward*100
+            reward += agent.previous_reward + finalReward
             # logger.critical("End Score: {}".format(reward))
             # winPercList.append(reward)
             await agent.step(agent.previous_state, agent.previous_action, finalReward, agent.previous_state, True)
@@ -203,7 +205,7 @@ async def showdown(accept, agent=None):
         logger.critical("W: {}\tL: {}".format(wins, losses))
         logger.critical("End Score: {}".format(reward))
     check_dictionaries_are_unmodified(original_pokedex, original_move_json)
-    return reward #winner == config.username
+    return reward, wins #winner == config.username
 
     # battles_run += 1
     # if battles_run >= config.run_count:
@@ -280,8 +282,10 @@ async def main():
                     randReward, _, damageReward, _ = await asyncio.wait_for(
                         train_episode(agent1, "safest", agent2, "most_damage"), timeout=TIMEOUT)
                     episodeList.append(episode)
-                    randRewardList.append(randReward)
-                    damageRewardList.append(damageReward)
+                    randRewardList.append(randReward[0]) # rewards
+                    damageRewardList.append(damageReward[0]) # rewards
+                    total_wins_rand.append(randReward[1]) # total wins
+                    total_wins_damage.append(damageReward[1]) # total wins
                 except asyncio.TimeoutError:
                     print('Timeout on test run: ' + str(episode//eval_time))
             agent1.train()  # allows the agent to train again
@@ -309,6 +313,11 @@ async def main():
     plt.plot(episodeList, randRewardList, label="Minimax bot Curve")
     plt.legend()
     plt.savefig("damage_minimax_421.png")
+    plt.figure()
+    plt.title("Total Wins per Episode")
+    plt.plot(episodeList, total_wins_rand, label="Rand Bot")
+    plt.plot(episodeList, total_wins_damage, label="Damage Bot")
+    plt.legend()
     plt.show()
     print("done training")
 

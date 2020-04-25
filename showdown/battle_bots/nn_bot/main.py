@@ -6,7 +6,7 @@ from showdown.engine.find_state_instructions import update_attacking_move
 from ..helpers import format_decision
 
 from showdown.battle_bots.nn_bot.deep_q_network import DeepQNetwork
-from showdown.engine.evaluate import evaluate
+from showdown.engine.evaluate import evaluate, evaluate2
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -52,10 +52,12 @@ class BattleBot(Battle):
 
         # convert state to matrix
         matrix = self.state_to_vector()
+        # totalEnemyHealth = evaluate2(state)
         reward = evaluate(state)
         # Calculate New Reward
         if agent.previous_state is not None:
-            await agent.step(agent.previous_state, agent.previous_action, self.LReLU((reward - agent.previous_reward)/2000), matrix, False)
+            await agent.step(agent.previous_state, agent.previous_action, (reward - agent.previous_reward)/2000, matrix, False)
+            # await agent.step(agent.previous_state, agent.previous_action, (agent.previous_reward - totalEnemyHealth)/6, matrix, False)
 
         # pass through network and return choice
         idx, choice = agent.act(matrix, my_options, all_switches)
@@ -63,10 +65,6 @@ class BattleBot(Battle):
 
         return format_decision(self, choice)
     
-    def LReLU(self, x):
-        x = max(x, .1*x)
-        return float(x)
-
     def state_to_vector(self):
         '''
         converts current battle state into a 1D vector
