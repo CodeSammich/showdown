@@ -30,9 +30,10 @@ from showdown.engine.evaluate import evaluate
 logger = logging.getLogger(__name__)
 
 # Constants
-ENEMY_BOT = "most_damage"
-ENEMY_TEAM = "random"
+ENEMY_BOT = "random"  # chooses random difficulty
+ENEMY_TEAM = "random"  # chooses random team to play against
 POSSIBLE_TEAMS = ["clef_sand", "band_toad", "balance", "simple", "weavile_stall", "mew_stall"]
+
 LOG_MODE = "CRITICAL"
 LOAD = False
 SAVE = True
@@ -64,6 +65,10 @@ def create_challenge_bot(one = True, bot = ENEMY_BOT):
     agent: specify str agent name (i.e rand_bot) or a DQNAgent. If DQNAgent will choose nn_bot
     """
     conf = Config()
+    if bot == "random":
+        choices = ["safest", "most_damage"]
+        bot = np.random.choice(choices)
+
     conf.battle_bot_module = bot
     conf.save_replay = config.save_replay
     conf.use_relative_weights = config.use_relative_weights
@@ -297,12 +302,14 @@ async def main():
         agent1.lossList = []
         agent2.lossList = agent1.lossList
 
-    if SAVE:
-        torch.save({
-            'local': agent1.qnetwork_local.state_dict(),
-            'target': agent1.qnetwork_target.state_dict()
-        }, 'nn_bot_trained')
-        # Plot Graphs
+
+        if SAVE:
+            torch.save({
+                'local': agent1.qnetwork_local.state_dict(),
+                'target': agent1.qnetwork_target.state_dict()
+            }, 'nn_bot_trained')
+            # Plot Graphs
+
     plt.clf()
     plt.figure()
     plt.plot(range(episode+1), lossList, label="agent loss list")
