@@ -19,7 +19,7 @@ TAU = 1e-2  # for soft update of target parameters
 LR = 5e-4  # learning rate
 UPDATE_EVERY = 4  # how often to update the network
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device("cpu")
 
 # mutex locking for multiprocessing
 _lock_table = {'locked': False}

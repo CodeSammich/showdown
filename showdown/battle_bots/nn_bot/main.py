@@ -7,6 +7,7 @@ from ..helpers import format_decision
 
 from showdown.battle_bots.nn_bot.deep_q_network import DeepQNetwork
 from showdown.engine.evaluate import evaluate, evaluate2, evaluate3
+from showdown.battle_bots.safest.main import BattleBot as safest
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -48,7 +49,8 @@ class BattleBot(Battle):
                 moves.append(option)
 
         if self.force_switch or not moves:
-            return format_decision(self, switches[0])
+            return safest.find_best_move(self)
+            # return format_decision(self, switches[0])
 
         # convert state to matrix
         matrix = self.state_to_vector()

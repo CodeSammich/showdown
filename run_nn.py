@@ -30,11 +30,15 @@ from showdown.engine.evaluate import evaluate
 logger = logging.getLogger(__name__)
 
 # Constants
-ENEMY_BOT = "most_damage"
-ENEMY_TEAM = "random"
-POSSIBLE_TEAMS = ["clef_sand", "band_toad", "balance", "simple", "weavile_stall", "mew_stall"]
+ENEMY_BOT = "most_damage"  # chooses random difficulty
+ENEMY_TEAM = "random"  # chooses random team to play against
+POSSIBLE_TEAMS = ["clef_sand", "band_toad", "balance", "simple", "weavile_stall", "mew_stall",
+    "clef_sand2", "keldeo_balance", "kyurem", "sylveon", "simple2"]
+OUR_TEAM = "simple"
+
 LOG_MODE = "CRITICAL"
-LOAD = False
+LOAD = True
+LOADED_FILE = "nn_bot_trained_80"
 SAVE = True
 TRAIN = True
 """Training params"""
@@ -64,6 +68,10 @@ def create_challenge_bot(one = True, bot = ENEMY_BOT):
     agent: specify str agent name (i.e rand_bot) or a DQNAgent. If DQNAgent will choose nn_bot
     """
     conf = Config()
+    if bot == "random":
+        choices = ["safest", "most_damage"]
+        bot = np.random.choice(choices)
+
     conf.battle_bot_module = bot
     conf.save_replay = config.save_replay
     conf.use_relative_weights = config.use_relative_weights
@@ -105,7 +113,7 @@ def create_accept_bot(one=True):
         conf.username = "AcceptGary2"
         conf.password = "password2"
     conf.bot_mode = "ACCEPT_CHALLENGE"
-    conf.team_name = "gen8/ou/simple"
+    conf.team_name = "gen8/ou/" + OUR_TEAM
     conf.pokemon_mode = "gen8ou"
     conf.run_count = 1
     conf.LOG_LEVEL = 'DEBUG'
@@ -240,7 +248,7 @@ async def main():
 
     # reinitialize and load weights
     if LOAD:
-        checkpoint = torch.load('nn_bot_trained')
+        checkpoint = torch.load(LOADED_FILE)
         model = DeepQNetwork(state_size, actions)
         model.load_state_dict(checkpoint['local'])
         agent1.qnetwork_local = model
@@ -297,27 +305,30 @@ async def main():
         agent1.lossList = []
         agent2.lossList = agent1.lossList
 
-    if SAVE:
-        torch.save({
-            'local': agent1.qnetwork_local.state_dict(),
-            'target': agent1.qnetwork_target.state_dict()
-        }, 'nn_bot_trained')
-        # Plot Graphs
+
+        if SAVE:
+            torch.save({
+                'local': agent1.qnetwork_local.state_dict(),
+                'target': agent1.qnetwork_target.state_dict()
+            }, 'nn_bot_trained')
+    
+    # Plot Graphs
     plt.clf()
     plt.figure()
-    plt.plot(range(episode+1), lossList, label="agent loss list")
+    plt.plot(range(episode+1), lossList, label="Average Loss")
     plt.legend()
-    plt.savefig("Agent_loss_421.png")
+    plt.savefig("Agent_loss.png")
     plt.figure()
-    plt.plot(episodeList, damageRewardList, label="Damage bot Curve")
-    plt.plot(episodeList, randRewardList, label="Minimax bot Curve")
+    plt.plot(episodeList, damageRewardList, label="Damage Reward")
+    plt.plot(episodeList, randRewardList, label="Minimax Reward")
     plt.legend()
-    plt.savefig("damage_minimax_421.png")
+    plt.savefig("Reward_curve.png")
     plt.figure()
     plt.title("Total Wins per Episode")
-    plt.plot(episodeList, total_wins_rand, label="Rand Bot")
-    plt.plot(episodeList, total_wins_damage, label="Damage Bot")
+    plt.plot(episodeList, total_wins_damage, label="Damage Wins")
+    plt.plot(episodeList, total_wins_rand, label="Minimax Wins")
     plt.legend()
+    plt.savefig("Wins_graph.png")
     plt.show()
     print("done training")
 
