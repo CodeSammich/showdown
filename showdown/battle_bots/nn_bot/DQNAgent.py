@@ -14,10 +14,12 @@ import torch.optim as optim
 
 BUFFER_SIZE = int(1e4)  # replay buffer size
 BATCH_SIZE = 16  # minibatch size
-GAMMA = 0.90  # discount factor
+GAMMA = 0.80  # discount factor
 TAU = 1e-2  # for soft update of target parameters
-LR = 5e-4  # learning rate
+LR = 1e-4  # learning rate
 UPDATE_EVERY = 4  # how often to update the network
+
+HARD_UPDATE = 100
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -70,20 +72,21 @@ class Agent():
 
     async def step(self, state, action, reward, next_step, done):
         if not self._train:
-            pass
+            return
             # print("Will not update network because it is in eval mode")
 
         # Save experience in replay memory
         self.memory.add(state, action, reward, next_step, done)
 
         # Learn every UPDATE_EVERY time steps.
-        self.t_step = (self.t_step + 1) % UPDATE_EVERY
-        if self.t_step == 0:
+        self.t_step = (self.t_step + 1)
+        if self.t_step % UPDATE_EVERY == 0:
             # If enough samples are available in memory, get radom subset and learn
 
             if len(self.memory) > BATCH_SIZE:
                 experience = self.memory.sample()
                 await self.learn(experience, GAMMA)
+
 
     def act(self, state, my_options, all_switches, eps=0.2):
         """Returns action for given state as per current policy
@@ -218,7 +221,8 @@ class Agent():
         self.optimizer.step()
 
         # ------------------- update target network ------------------- #
-        self.soft_update(self.qnetwork_local, self.qnetwork_target, TAU)
+        if self.t_step % HARD_UPDATE == 0:
+            self.hard_update(self.qnetwork_local, self.qnetwork_target)
         # UNLOCK
         _lock_table['locked'] = False
 
@@ -234,6 +238,14 @@ class Agent():
         for target_param, local_param in zip(target_model.parameters(),
                                              local_model.parameters()):
             target_param.data.copy_(tau * local_param.data + (1 - tau) * target_param.data)
+
+    def hard_update(self, local_model, target_model):
+        """
+            hard_update
+        """
+        for target_param, local_param in zip(target_model.parameters(),
+                                             local_model.parameters()):
+            target_param.data.copy_(local_param.data)
 
 
     def train(self):
