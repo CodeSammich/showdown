@@ -12,3 +12,6 @@ suspect_decisions.py
 tags
 .DS_Store
 nn_bot_trained_old*
+Agent_loss.png
+Reward_curve.png
+Wins_graph.png
