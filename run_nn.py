@@ -30,11 +30,11 @@ from showdown.engine.evaluate import evaluate
 logger = logging.getLogger(__name__)
 
 # Constants
-ENEMY_BOT = "random"  # chooses random difficulty
+ENEMY_BOT = "most_damage"  # chooses random difficulty
 ENEMY_TEAM = "random"  # chooses random team to play against
 POSSIBLE_TEAMS = ["clef_sand", "band_toad", "balance", "simple", "weavile_stall", "mew_stall",
     "clef_sand2", "keldeo_balance", "kyurem", "sylveon", "simple2", "shedinja", "scummy_hail", "scummy_sand", "heatGoon", "sir"]
-OUR_TEAM = "simple2"
+OUR_TEAM = "simple"
 
 LOG_MODE = "CRITICAL"
 LOAD = False
@@ -42,9 +42,9 @@ LOADED_FILE = "nn_bot_trained_80"
 SAVE = True
 TRAIN = True
 """Training params"""
-num_games = 5
+num_games = 10
 TIMEOUT = 300 #seconds
-episodes = 10
+episodes = 500 
 merge_networks_time = 10000  # run this many times and then merge multiple agents TODO
 
 """Performance Params"""
