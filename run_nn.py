@@ -30,15 +30,14 @@ from showdown.engine.evaluate import evaluate
 logger = logging.getLogger(__name__)
 
 # Constants
-ENEMY_BOT = "most_damage"  # chooses random difficulty
+ENEMY_BOT = "random"  # chooses random difficulty
 ENEMY_TEAM = "random"  # chooses random team to play against
-POSSIBLE_TEAMS = ["clef_sand", "band_toad", "balance", "simple", "weavile_stall", "mew_stall",
-    "clef_sand2", "keldeo_balance", "kyurem", "sylveon", "simple2", "shedinja", "scummy_hail", "scummy_sand", "heatGoon", "sir"]
+POSSIBLE_TEAMS = ["clef_sand", "band_toad", "balance", "simple", "weavile_stall", "mew_stall"]
 OUR_TEAM = "simple"
 
 LOG_MODE = "CRITICAL"
-LOAD = False
-LOADED_FILE = "nn_bot_trained_80"
+LOAD = True
+LOADED_FILE = "nn_bot_trained"
 SAVE = True
 TRAIN = True
 """Training params"""
@@ -304,8 +303,9 @@ async def main():
         lossList.append(episodeLoss)
         agent1.lossList = []
         agent2.lossList = agent1.lossList
-
-
+        intermediate_out = open("intermediate3", "wb")
+        megaArray = [episodeList, randRewardList, damageRewardList, total_wins_rand, total_wins_damage]
+        np.save(intermediate_out, megaArray, allow_pickle=True)
         if SAVE:
             torch.save({
                 'local': agent1.qnetwork_local.state_dict(),
