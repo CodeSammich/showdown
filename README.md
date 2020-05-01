@@ -1,3 +1,10 @@
+
+# Forked Modifications
+
+Developed new battle bot `nn_bot`, which uses a Double Deep-Q-Network (DDQN) to compete against the other three benchmark bots (random, most damage, minimax). This battle bot was the basis of final project group for CS7643: Deep Learning at the Georgia Institute of Technology (2020 Spring).
+
+---------- Original README ---------------
+
 # Showdown  ![umbreon](https://play.pokemonshowdown.com/sprites/xyani/umbreon.gif)
 Showdown is a Pokémon battle-bot that can play battles on [Pokemon Showdown](https://pokemonshowdown.com/).
 
