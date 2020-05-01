@@ -1,7 +1,7 @@
 
 # Forked Modifications
 
-Developed new battle bot `nn_bot`, which uses a Double Deep-Q-Network (DDQN) to compete against the other three benchmark bots (random, most damage, minimax). This battle bot was the basis of final project group for CS7643: Deep Learning at the Georgia Institute of Technology (2020 Spring).
+Developed new battle bot `nn_bot`, which uses a Double Deep Q-Network (DDQN) to compete against the other three benchmark bots (random, most damage, minimax). This battle bot was the basis of final project group for CS7643: Deep Learning at the Georgia Institute of Technology (2020 Spring).
 
 ---
 
